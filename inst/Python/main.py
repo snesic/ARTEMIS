@@ -1,11 +1,22 @@
-import numpy as np
 import pandas as pd
 import math as math
-import re
+import numpy as np
+from re import search
+from re import findall
+from numpy import append
 
 pd.options.display.max_columns = None
 
-def temporal_alignment(s1,regName,s2,g,T,s,verbose,mem=-1,removeOverlap=0,method="PropDiff"):
+def find_gaps(pat, seq):
+	gaps_init = search(pat, seq)
+	if gaps_init is not None:
+		gaps = len(findall("__",gaps_init[0]))
+	else:
+		gaps = 0
+
+	return gaps
+
+def temporal_alignment(s1,regName,s2,g,T,s,verbose,method="PropDiff"):
 	s1_len = len(s1)
 	s2_len = len(s2)
 
@@ -24,6 +35,9 @@ def temporal_alignment(s1,regName,s2,g,T,s,verbose,mem=-1,removeOverlap=0,method
 	#Setup pattern for detecting sequence gaps, by number of "__"s (Aligned gaps)
 	pat_gap = "__"
 	pat_end_gap = "__$"
+	pat_gap = "(__;)+[0-9]+"
+	pat_end_gap = "(__;)+__$"
+	pat_search = "__"
 
 	#Init return Dat
 	returnDat = [regName,str(s1).strip('[]'),str(s2).strip('[]'),"","","","","","",""]
@@ -105,6 +119,19 @@ def temporal_alignment(s1,regName,s2,g,T,s,verbose,mem=-1,removeOverlap=0,method
 			s2_a_gaps = len(re.findall(pat_gap,s2_aligned_t))
 			s1_end_gaps = len(re.findall(pat_end_gap,s1_aligned_t))
 
+	if len(mem_score) > 1:
+		secondary = 1	
+		for i in range(0,len(mem_index)):
+
+			s1_aligned_t, s2_aligned_t, totAligned_t = align_TSW(traceMat, s1, s2, s1_len, s2_len, mem_index[i])
+			
+			s_f_len = max(len(findall(pat,s2_aligned_t)),len(findall(pat,s1_aligned_t)))
+
+			s1_gaps = find_gaps(pat_gap, s1_aligned_t)
+			s1_end_gaps = find_gaps(pat_end_gap, s1_aligned_t)
+			s2_gaps = find_gaps(pat_gap, s2_aligned_t)
+			s2_end_gaps = find_gaps(pat_end_gap, s2_aligned_t)
+
 			s1_start = mem_index[i][1] - s_a_t_len
 			s1_end = mem_index[i][1]
 			s2_start = mem_index[i][0] - s_a_t_len + s2_a_gaps
@@ -120,6 +147,39 @@ def temporal_alignment(s1,regName,s2,g,T,s,verbose,mem=-1,removeOverlap=0,method
 				print("Score: ")
 				print(mem_score[i])
 				print()
+
+			s2_start = mem_index[i][0] - s_f_len - s1_end_gaps
+			s2_end = mem_index[i][0] - s1_end_gaps
+
+			if (s1_start+1) > 1:
+				totAligned_t = totAligned_t + (s1_end-(s1_start+1))
+				s_f_len = s_f_len + (s1_end-(s1_start+1))
+
+			#regName, regimen, drugRecord, score, regStart, regEnd, drugStart, drugEnd, seqLength, totAlign
+			returnDat = append(returnDat,[regName,s1_aligned_t,s2_aligned_t,mem_score[i],s1_start+1,s1_end,s2_start+1,s2_end,s_f_len,totAligned_t], axis = 0)	
+
+	else: 
+		s1_aligned_t, s2_aligned_t, totAligned_t = align_TSW(traceMat, s1, s2, s1_len, s2_len, finalIndex)
+		
+		s_f_len = max(len(findall(pat,s2_aligned_t)),len(findall(pat,s1_aligned_t)))
+
+		s1_gaps = find_gaps(pat_gap, s1_aligned_t)
+		s1_end_gaps = find_gaps(pat_end_gap, s1_aligned_t)
+		s2_gaps = find_gaps(pat_gap, s2_aligned_t)
+		s2_end_gaps = find_gaps(pat_end_gap, s2_aligned_t)
+
+		s1_start = finalIndex[1] - s_f_len
+		s1_end = finalIndex[1]
+
+		s2_start = finalIndex[0] - s_f_len - s1_end_gaps
+		s2_end = finalIndex[0] - s1_end_gaps
+
+		if (s1_start+1) > 1:
+			totAligned_t = totAligned_t + (s1_end-(s1_start+1))
+			s_f_len = s_f_len + (s1_end-(s1_start+1))
+
+		#regName, regimen, drugRecord, score, regStart, regEnd, drugStart, drugEnd, seqLength, totAlign
+		returnDat = append(returnDat,[regName,s1_aligned_t,s2_aligned_t,finalScore,s1_start+1,s1_end,s2_start+1,s2_end,s_f_len,totAligned_t], axis = 0)	
 
 	#Reshape return array to account for secondary alignments
 	if secondary == 1:
@@ -174,4 +234,22 @@ def temporal_alignment(s1,regName,s2,g,T,s,verbose,mem=-1,removeOverlap=0,method
 		print("Removed %s overlaps" % runTot)
 		print("Done")
 		
+		
+	#print("Final score matrix: ")
+	#H = pd.DataFrame(H)
+	#s1p = ["NA"] + [''.join(i) for i in s1]
+	#Hp = H.set_axis(s1p, axis = 1, copy=False)
+	#s2p = ["NA"] + [''.join(i) for i in s2]
+	#Hp = Hp.set_axis(s2p, axis = 0, copy=False)
+	#print(Hp)
+	#print("Final traceback matrix: ")
+	#traceMatp = pd.DataFrame(traceMat)
+	#traceMatp = traceMatp.set_axis(s1p, axis = 1, copy=False)
+	#traceMatp = traceMatp.set_axis(s2p, axis = 0, copy=False)
+	#print(traceMatp)
+	#print("Final TC matrix: ")
+	#print(TC)
+	#print("Final TR matrix: ")
+	#print(TR)
+
 	return returnDat
