@@ -71,9 +71,9 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
     outputDF[outputDF$drugRec_Start <= 0,]$drugRec_Start <- 1
   }
 
-  #if(max(outputDF$drugRec_End) > max(drugDF$index)){
-  #  outputDF[outputDF$drugRec_End > max(drugDF$index),]$drugRec_End <- max(drugDF$index)
-  #}
+  if(max(outputDF$drugRec_End) > max(drugDF$index)){
+    outputDF[outputDF$drugRec_End > max(drugDF$index),]$drugRec_End <- max(drugDF$index)
+  }
 
   outputDF$t_start <- drugDF[outputDF$drugRec_Start,]$t_start
   outputDF$t_end <- drugDF[outputDF$drugRec_End,]$t_start
@@ -122,7 +122,7 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
   for(i in c(1:dim(outputDF)[1])){
     for(j in c(i:dim(outputDF)[1])) {
       if(i != j){
-        if(outputDF[i,]$t_start < outputDF[j,]$t_end & outputDF[i,]$t_end > outputDF[j,]$t_start){
+        if(outputDF[i,]$t_start <= outputDF[j,]$t_end & outputDF[i,]$t_end >= outputDF[j,]$t_start){
           mostComps <- max(outputDF[c(i,j),]$compNo)
           toRemove <- c(toRemove,c(i,j)[outputDF[c(i,j),]$compNo < mostComps])
 
@@ -714,6 +714,8 @@ plotErasFrequency <- function(processedEras, N = 10){
 #' Plots a sankey diagram displaying the flow between first, second and third regimen eras
 #' @param processedEras An output dataframe created by calculateEras
 #' @param regGroups A dataframe indicating how to group regimens
+#' @param saveLocation A file directory location where files may be saved
+#' @param fileName A filename prefix for saved files
 #' @export
 plotSankey <- function(processedEras, regGroups, saveLocation = NA, fileName = "Network"){
 
