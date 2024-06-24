@@ -42,7 +42,7 @@ patient treatment trajectories.
 ARTEMIS can presently be installed directly from GitHub:
 
     # install.packages("devtools")
-    devtools::install_github("odyOSG/ARTEMIS@DatabaseConnector")
+    devtools::install_github("OHDSI/ARTEMIS")
 
 ARTEMIS relies on a python back-end via
 [reticulate](https://rstudio.github.io/reticulate/) and depending on
