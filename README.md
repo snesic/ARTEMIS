@@ -116,6 +116,7 @@ submitted directly by the user. All of the provided regimens will be
 tested against all patients within a given cohort.
 
     regimens <- loadRegimens(condition = "lungCancer")
+    regGroups <- loadGroups()
 
     #Manual
     #regimens <- read.csv(here::here("data/myRegimens.csv"))
@@ -134,12 +135,14 @@ processed patient strings.
 The cdm connection is used to generate a dataframe containing the
 relevant patient details for constructing regimen strings.
 
-    con_df <- getConDF(connectionDetails, json, name, cdmSchema, writeSchema)
+    con_df <- getConDF(connectionDetails = connectionDetails, json = json, 
+                       name = name, cdmSchema = cdmSchema, 
+                       writeSchema = writeSchema)
 
 Regimen strings are then constructed, collated and filtered into a
 stringDF dataframe containing all patients of interest.
 
-    stringDF <- stringDF_from_cdm(con_df = con_df, writeOut = F, validDrugs = validDrugs)
+    stringDF <- stringDF_from_cdm(con_df = con_df, writeOut = F, validDrugs = validdrugs)
 
 The TSW algorithm is then run using user input settings and the provided
 regimen and patient data. Detailed information on user inputs, such as
@@ -160,9 +163,9 @@ submission to an episode era table.
 
     processedAll <- output_all %>% processAlignments(regimenCombine = 28, regimens = regimens)
 
-    personOfInterest <- output_all[output_all$personID == unique(output_all$personID)[1337],]
+    processedEras <- processedAll %>% calculateEras()
 
-    plotOutput(personOfInterest, fontSize = 2.5)
+    regStats <- processedEras %>% generateRegimenStats()
 
 Data may then be further explored via several graphics which indicate
 various information, such as regimen frequency or the score/length
@@ -210,9 +213,10 @@ writeOutputs also produces data about the underlying cohorts used to
 construct the regimen outputs, and so also requires a call to the
 connection via DatabaseConnector directly.
 
-    writeOutputs(output_all = output_all, output_processed = processedAll, output_eras = processedEras,
-                 connectionDetails = connectionDetails, cdmSchema = cdmSchema, con_df = con_df,
-                 regGroups = regimen_Groups, regStats = regStats, stringDF = stringDF)
+    writeOutputs(output_all, processedAll = processedAll, processedEras = processedEras,
+                 connectionDetails = connectionDetails, cdmSchema = cdmSchema,
+                 regGroups = regGroups, regStats = regStats, stringDF = stringDF, 
+                 con_df = con_df)
 
 ## Getting help
 
