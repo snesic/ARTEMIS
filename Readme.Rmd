@@ -69,6 +69,10 @@ writeSchema <- "schema_with_write_access"
 
 ```
 
+### User Script
+
+A user script is attached to this repository for users who already have a valid CDM connection and a working python environment. Changing the settings within the first section of this file and running the entire script will generate a default ARTEMIS output for the provided CDM.
+
 ### Input
 
 An input JSON containing a cohort specification is input by the user. Information on OHDSI cohort creation and best practices can be found [here](https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html). An example cohort selecting for patients with NSCLC is provided with the package.

@@ -82,6 +82,13 @@ directly from GitHub.
     cdmSchema <- "schema_containing_data"
     writeSchema <- "schema_with_write_access"
 
+### User Script
+
+A user script is attached to this repository for users who already have
+a valid CDM connection and a working python environment. Changing the
+settings within the first section of this file and running the entire
+script will generate a default ARTEMIS output for the provided CDM.
+
 ### Input
 
 An input JSON containing a cohort specification is input by the user.
