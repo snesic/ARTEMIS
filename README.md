@@ -20,23 +20,6 @@ to form the basic regimen data used in testing.
 <figcaption aria-hidden="true">ARTEMIS Workflow</figcaption>
 </figure>
 
-## Features
-
-ARTEMIS is primarily useful for stratifying patients based on their most
-likely prescribed regimens, for use in cohort construction via the
-Episode Era table of the [OMOP
-CDM](https://www.ohdsi.org/data-standardization/).
-
-ARTEMIS may also be used for providing summary statistics on the number
-and distribution of regimens found within a specific cohort, as well as
-their coverage and length, as well as providing summary graphics for
-patient treatment trajectories.
-
-<figure>
-<img src="/img/Networks.png?" alt="Treatment Trajectories" />
-<figcaption aria-hidden="true">Treatment Trajectories</figcaption>
-</figure>
-
 ## Installation
 
 ARTEMIS can presently be installed directly from GitHub:
@@ -49,10 +32,10 @@ ARTEMIS relies on a python back-end via
 your reticulate settings, system and environment, you may need to run
 the following commands before loading the package:
 
-    #reticulate::py_install("numpy")
-    #reticulate::py_install("pandas")
+    reticulate::py_install("numpy")
+    reticulate::py_install("pandas")
 
-If you do not presently have reticulate or python3.11 installed you may
+If you do not presently have reticulate or python3.12 installed you may
 first need to run the following commands to ensure that reticulate can
 access a valid python install on your system:
 
@@ -60,8 +43,8 @@ access a valid python install on your system:
     library(reticulate)
 
 This will prompt reticulate to install python, create a local virtualenv
-called “r-reticulate” and finally set that as the local virtual
-environment for use when running python via R.
+called “r-reticulate” and, finally, set this virtual environment as the
+local environment for use when running python via R through reticulate.
 
 ## Usage
 
@@ -83,7 +66,8 @@ If the OHDSI package [CirceR](https://github.com/OHDSI/CirceR) is not
 already installed on your system, you may need to directly install this
 from the OHDSI/CirceR github page, as this is a non-CRAN dependency
 required by CDMConnector. You may similarly need to install the
-[CohortGenerator](https://github.com/OHDSI/CohortGenerator) package.
+[CohortGenerator](https://github.com/OHDSI/CohortGenerator) package
+directly from GitHub.
 
     #devtools::install_github("OHDSI/CohortGenerator")
     #devtools::install_github("OHDSI/CirceR")
@@ -102,7 +86,8 @@ required by CDMConnector. You may similarly need to install the
 
 An input JSON containing a cohort specification is input by the user.
 Information on OHDSI cohort creation and best practices can be found
-[here](https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html).
+[here](https://ohdsi.github.io/TheBookOfOhdsi/Cohorts.html). An example
+cohort selecting for patients with NSCLC is provided with the package.
 
     json <- loadCohort()
     name <- "examplecohort"
@@ -123,7 +108,10 @@ tested against all patients within a given cohort.
 
 A set of valid drugs may also be read in using the provided data, or may
 be curated and submitted by the user. Only valid drugs will appear in
-processed patient strings.
+processed patient strings, and thus any drugs not included here will not
+effect alignment. Drugs which are frequently taken outside of
+chemotherapy regimens, such as antiemetics, should not be added to this
+list.
 
     validDrugs <- loadDrugs()
 
@@ -146,7 +134,7 @@ stringDF dataframe containing all patients of interest.
 
 The TSW algorithm is then run using user input settings and the provided
 regimen and patient data. Detailed information on user inputs, such as
-the gap penalty, g, can be found [here](www.github.com/odyOSG/ARTEMIS)
+the gap penalty, g, can be found [here](www.github.com/OHDIS/ARTEMIS).
 
     output_all <- stringDF %>% generateRawAlignments(regimens = regimens,
                                                      g = 0.4,
@@ -173,9 +161,9 @@ distributions of a given regimen.
 
     plotFrequency(processedAll)
 
-    plotScoreDistribution(regimen1 = "Acetaminophen Monotherapy", regimen2 = "Ibuprofen Monotherapy", processedAll = processedAll)
+    plotScoreDistribution(regimen1 = "Paclitaxel Monotherapy", regimen2 = "Pembrolizumab Monotherapy", processedAll = processedAll)
 
-    plotRegimenLengthDistribution(regimen1 = "Acetaminophen Monotherapy", regimen2 = "Ibuprofen Monotherapy", processedAll = processedAll)
+    plotRegimenLengthDistribution(regimen1 = "Paclitaxel Monotherapy", regimen2 = "Pembrolizumab Monotherapy", processedAll = processedAll)
 
 Treatment trajectories, or regimen eras, can then be calculated, adding
 further information about the relative sequencing order of different
@@ -184,22 +172,6 @@ regimens and regimen types.
     processedEras <- processedAll %>% calculateEras(discontinuationTime = 90)
 
     regStats <- processedEras %>% generateRegimenStats()
-
-And resulting graphics, such as a sankey indicating the overall patterns
-of treatment trajectories can then be constructed. plotSankey() produces
-both a saved .png as well as an interactable .html of the created
-network graph.
-
-You may need to run webshot::install\_phantomjs() if your system does
-not already have it installed to utilise the Sankey package.
-
-    plotErasFrequency(processedEras)
-
-    #Potential dependency install:
-    #webshot::install_phantomjs()
-
-    regimen_Groups <- loadGroups()
-    plotSankey(processedEras, regimen_Groups)
 
 ### Output
 
