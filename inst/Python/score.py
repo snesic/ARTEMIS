@@ -176,7 +176,7 @@ def find_best_score(H,s2_len,s1_len,mem,verbose):
 	#Select from mem according to the requested number of alignments
 	#Mem = -1 : As many non-overlapping alignments as possible
 	if mem == -1:
-		mem = max(1,math.ceil(s1_len/s2_len))
+		mem = max(1,math.floor(s1_len/s2_len))
 		mem_min = mem_array[-mem][0]
 		mem_array = mem_array[ mem_min <= mem_array[:,0] ]#
 		mem_score, mem_index = mem_array[:, 0], mem_array[:, 1]
