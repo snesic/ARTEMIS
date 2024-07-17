@@ -172,7 +172,7 @@ loadCohort <- function() {
 
 #' Filter a stringDF dataframe to contain only valid patients
 #' @param output_all A dataframe containing raw outputs
-#' @param output_processed A dataframe containing processed output regimens
+#' @param processedAll A dataframe containing processed output regimens
 #' @param processedEras A dataframe containing processed regimen eras
 #' @param regGroups The desired regimen grouping variables for Sankey construction
 #' @param regStats A dataframe containing various summary statistics
@@ -182,13 +182,13 @@ loadCohort <- function() {
 #' @param stringDF A stringDF object containing all valid patients (i.e., those who have exposure
 #' to at least one valid drug)
 #' @export
-writeOutputs <- function(output_all, output_processed, processedEras, regGroups, regStats, connectionDetails, cdmSchema, con_df, stringDF){
+writeOutputs <- function(output_all, processedAll, processedEras, regGroups, regStats, connectionDetails, cdmSchema, con_df, stringDF){
   uniqueIDs <- unique(output_all$personID)
   random_ids <- sample(1:10000000, length(uniqueIDs), replace = F) %>% as.character()
   id_dictionary <- cbind(uniqueIDs, random_ids) %>% `colnames<-`(c("personID", "anonymisedID")) %>% as.data.frame()
 
   output_all_anon <- merge(output_all,id_dictionary)[,-1]
-  output_processed_anon <- merge(output_processed,id_dictionary)[,-1]
+  processedAll_anon <- merge(processedAll,id_dictionary)[,-1]
   output_eras_anon <- merge(processedEras,id_dictionary)[,-1]
 
   dir.create(file.path(here::here(), "output_data"), showWarnings = FALSE)
@@ -204,7 +204,7 @@ writeOutputs <- function(output_all, output_processed, processedEras, regGroups,
                   bullet_col = "yellow", bullet = "info")
 
   write.csv(x = output_all_anon, file = here::here("output_data/OutputAll.csv"))
-  write.csv(x = output_processed_anon, file = here::here("output_data/OutputProcessed.csv"))
+  write.csv(x = processedAll_anon, file = here::here("output_data/OutputProcessed.csv"))
   write.csv(x = output_eras_anon, file = here::here("output_data/OutputEras.csv"))
 
   cli::cat_bullet("Saving aggregate data...",

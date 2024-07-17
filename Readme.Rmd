@@ -196,4 +196,4 @@ writeOutputs(output_all, processedAll = processedAll, processedEras = processedE
 
 ## Getting help
 
-If you encounter a clear bug, please file an issue with a minimal [reproducible example](https://reprex.tidyverse.org/) at the [GitHub issues page](https://github.com/OdyOSG/ARTEMIS/issues).
+If you encounter a clear bug, please file an issue with a minimal [reproducible example](https://reprex.tidyverse.org/) at the [GitHub issues page](https://github.com/OHDSI/ARTEMIS/issues).

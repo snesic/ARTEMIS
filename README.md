@@ -201,4 +201,4 @@ connection via DatabaseConnector directly.
 
 If you encounter a clear bug, please file an issue with a minimal
 [reproducible example](https://reprex.tidyverse.org/) at the [GitHub
-issues page](https://github.com/OdyOSG/ARTEMIS/issues).
+issues page](https://github.com/OHDSI/ARTEMIS/issues).
