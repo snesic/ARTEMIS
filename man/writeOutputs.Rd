@@ -6,20 +6,21 @@
 \usage{
 writeOutputs(
   output_all,
-  output_processed,
+  processedAll,
   processedEras,
   regGroups,
   regStats,
   connectionDetails,
   cdmSchema,
   con_df,
-  stringDF
+  stringDF,
+  skipSummaryStats = FALSE
 )
 }
 \arguments{
 \item{output_all}{A dataframe containing raw outputs}
 
-\item{output_processed}{A dataframe containing processed output regimens}
+\item{processedAll}{A dataframe containing processed output regimens}
 
 \item{processedEras}{A dataframe containing processed regimen eras}
 
@@ -35,6 +36,8 @@ writeOutputs(
 
 \item{stringDF}{A stringDF object containing all valid patients (i.e., those who have exposure
 to at least one valid drug)}
+
+\item{skipSummaryStats}{A toggle indicating whether or not the user wishes to skip generating additional summary statistics}
 }
 \description{
 Filter a stringDF dataframe to contain only valid patients

@@ -90,7 +90,8 @@ align <- function(regimen,regName,drugRec,g,Tfac,s=NA,verbose,mem,removeOverlap,
 
     dat$adjustedS <- as.numeric(dat$Score)/as.numeric(dat$totAlign)
 
-    dat <- dat[!dat$totAlign == 0,]
+    dat <- dat %>%
+      filter(totAlign != 0, totAlign != -1, (adjustedS > 0|is.na(adjustedS)))
 
     return(dat)
   }

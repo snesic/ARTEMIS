@@ -138,12 +138,14 @@ loadDrugs <- function() {
 
 #' Load regimens for a given condition
 #' @param condition A string indicating which regimen set to load
-#' Presently, the only condition fully mapped is lungCancer
+#' Presently, the only condition fully mapped are lungCancer and multiple myeloma
 #' @export
 loadRegimens <- function(condition) {
   if(condition == "lungCancer"){
     #data("regimens", package = "ARTEMIS")
-    return(ARTEMIS::regimens)
+    return(ARTEMIS::regimens %>% filter(metaCondition == "Thoraic Oncology"))
+  } else if (condition == "multipleMyeloma"){
+    return(ARTEMIS::regimens %>% filter(metaCondition == "Multiple Myeloma"))
   } else {
     message("Invalid condition. Please try running validConditions()")
   }
@@ -154,6 +156,7 @@ loadRegimens <- function(condition) {
 validConditions <- function(){
   message("Conditions currently implemented:")
   message("lungCancer")
+  message("multipleMyeloma")
 }
 
 #' Load the default regimen group dataframe
