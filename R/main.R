@@ -125,7 +125,7 @@ processAlignments <- function(rawOutput, regimenCombine, regimens = "none", writ
 
     newOutput <- rawOutput[rawOutput$personID == IDs_All[i],]
 
-    processed <- plotOutput(newOutput, returnDat = T, returnDrugs = FALSE)
+    processed <- plotOutput(newOutput, regimenCombine = regimenCombine, returnDat = T, returnDrugs = FALSE)
 
     progress(x = i, max = length(IDs_All))
 
