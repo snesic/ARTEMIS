@@ -62,7 +62,7 @@ def temporal_alignment(s1,regName,s2,g,T,s,verbose,mem=-1,removeOverlap=0,method
 
 			s1_start = mem_index[i][1] - s_f_len
 			s1_end = mem_index[i][1]
-			s2_start = mem_index[i][0] - s_f_len + s2_gaps
+			s2_start = mem_index[i][0] - s_f_len + s2_gaps + s2_end_gaps
 			s2_end = mem_index[i][0] - s1_end_gaps
 
 			if (s1_start+1) > 1:
