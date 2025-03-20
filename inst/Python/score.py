@@ -178,7 +178,7 @@ def find_best_score(H,s2_len,s1_len,mem,verbose):
 	if mem == -1:
 		mem = max(1,math.floor(s1_len/s2_len))
 		mem_min = mem_array[-mem][0]
-		mem_array = mem_array[ mem_min <= mem_array[:,0] ]#
+		mem_array = mem_array[ mem_min * 0.9 <= mem_array[:,0] ]#
 		mem_score, mem_index = mem_array[:, 0], mem_array[:, 1]
 		if(verbose == 2):
 			print("Calculated mem: ")
@@ -192,7 +192,7 @@ def find_best_score(H,s2_len,s1_len,mem,verbose):
 	# Mem >= 1 : Return N alignments and all alignments with the same score as the Nth alignment 
 	else:
 		mem_min = mem_array[-mem][0]
-		mem_array = mem_array[ mem_min <= mem_array[:,0] ]
+		mem_array = mem_array[ mem_min * 0.9 <= mem_array[:,0] ]
 		mem_score, mem_index = mem_array[:, 0], mem_array[:, 1]
 
 	mem_score = mem_score[::-1]
