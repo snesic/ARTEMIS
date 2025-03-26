@@ -230,35 +230,28 @@ calculateEras <- function(processedAll, discontinuationTime = 120){
                                        component == dplyr::lag(component)),"Y","N"))
 
     tempDF[1,]$delete <- "N"
-    tempDF <- tempDF[tempDF$delete != "Y",!colnames(tempDF) %in% c("delete")]
-
-    changeIndex <- which(tempDF$t_start !=
-                           dplyr::lag(tempDF$t_start))
-
-    tempDF$First_Line <- 1
-    #if(dim(tempDF)[1] > 1){
-    #  tempDF[-1,]$First_Line <- 0
-    #}
-    tempDF$Second_Line <- 0
-    tempDF$Other <- 0
-
-    if(length(changeIndex) > 0){
-      tempDF[changeIndex[1],]$First_Line <- 0
-      tempDF[changeIndex[1],]$Second_Line <- 1
-    }
-
-    if(length(changeIndex) > 1){
-      tempDF[changeIndex[-1],]$First_Line <- 0
-      tempDF[changeIndex[-1],]$Second_Line <- 0
-      tempDF[changeIndex[-1],]$Other <- 1
-    }
-
-    processedEras <- rbind(processedEras,tempDF)
-
-    #Handle overlapping regimens
-    processedEras$timeToNextRegimen[processedEras$timeToNextRegimen < 0] <- 0
-
-
+    tempDF <- tempDF %>% 
+      mutate(newLine = cumsum(delete == "N")) %>%
+      summarise(
+        t_start = min(t_start),
+        t_end = max(t_end),
+        timToEod = min(timeToEOD),
+        .by = c(component, newLine, personID)
+        ) %>%
+      mutate(
+        regLength = t_end - t_start,
+        timeToNextRegimen = lag(t_start, 1) - t_end,
+        First_Line = 1 * (row_number() == 1),
+        Second_Line = 1 * (row_number() == 2),
+        Other = 1 * (row_number() > 2)
+      )
+      
+      processedEras <- rbind(processedEras,tempDF)
+      
+      #Handle overlapping regimens
+      processedEras$timeToNextRegimen[processedEras$timeToNextRegimen < 0] <- 0
+      
+      
   }
 
   return(processedEras)
