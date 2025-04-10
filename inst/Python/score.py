@@ -1,7 +1,5 @@
 import numpy as np
-import pandas as pd
 import math as math
-import re
 
 def lossFunction(T,t1,t2,method,i,j):
 	absDiff = abs(t1-t2)
@@ -41,6 +39,8 @@ def lossFunction(T,t1,t2,method,i,j):
 
 
 def score(s,x,y):
+	# print(s)
+	# print(1/0)
 	score = s[x][y]
 
 	return score
@@ -53,6 +53,85 @@ def swapPos(s2,i,k):
 	s2[k-1][1] = temp
 
 	return s2
+
+
+def TSW_scoreMat_cleaned(s1, s1_len, s2, s2_len, g, T, H, TR, TC, traceMat, s, method):
+	"""
+    Computes alignment scores between two sequences using a time-sensitive weighted (TSW) scoring approach.
+
+    This function modifies the following matrices in-place:
+    - H: score matrix
+    - TR: time penalty matrix (row-wise)
+    - TC: time penalty matrix (column-wise)
+    - traceMat: traceback direction matrix
+
+    Arguments:
+    - s1: target sequence (list of [time, drug])
+    - s1_len: length of s1
+    - s2: input sequence (list of [time, drug])
+    - s2_len: length of s2
+    - g: gap penalty
+    - T: time penalty threshold
+    - H: score matrix (2D list)
+    - TR: time penalty matrix for s2 (2D list)
+    - TC: time penalty matrix for s1 (2D list)
+    - traceMat: traceback matrix (2D list)
+    - s: similarity matrix (DataFrame)
+    - method: time penalty method
+    """
+	for i in range(1, s2_len + 1):
+         for j in range(1, s1_len + 1):
+            # Dynamic re-ordering if match and 0-time at start or end of sequence
+            if 1 < i < s2_len and float(min(s1[j-1][0], s2[i-1][0])) == 0:
+                if s1[j-1][1] == s2[i-1][1]:
+                    # Start-of-regimen case
+                    if j == 1 and float(s2[i-1][0]) == 0:
+                        s2 = swapPos(s2, i, i - 1)
+                        i -= 1
+                        continue
+
+                    # End-of-regimen case
+                    elif j == s1_len and float(s2[i-1][0]) == 0:
+                        if float(s2[i][0]) == 0:
+                            s2 = swapPos(s2, i, i + 1)
+                            i -= 1
+                            continue
+
+            # Time penalty calculation
+            if i == 1 and j == 1:
+                tp = 0
+            else:
+                tpx = float(s2[i - 1][0]) + float(TR[i - 1][j - 1])
+                tpy = float(s1[j - 1][0]) + float(TC[i - 1][j - 1])
+                tp = lossFunction(T, tpx, tpy, method, i, j)
+
+            # Score and dynamic programming update
+            score_match = score(s, s1[j - 1][1], s2[i - 1][1])
+            Hup = H[i - 1][j - 1] + score_match - tp
+            Hmid = H[i - 1][j] - g
+            Hbot = H[i][j - 1] - g
+
+            H[i][j] = max(0, Hup, Hmid, Hbot)
+            traceVal = [0, Hup, Hmid, Hbot].index(H[i][j])
+            traceMat[i][j] = traceVal
+
+            # Update TR and TC based on traceback direction
+            if traceVal == 1:  # Diagonal
+                TR[i][j] = 0
+                TC[i][j] = 0
+            elif traceVal == 2:  # Horizontal
+                TR[i][j] = TR[i - 1][j] + float(s2[i - 1][0])
+                TC[i][j] = TC[i - 1][j]
+            elif traceVal == 3:  # Vertical
+                TR[i][j] = TC[i][j - 1]
+                TC[i][j] = TC[i][j - 1] + float(s1[j - 1][0])
+
+            # Penalize early alignment when s2 time is before s1
+            if j == s1_len and i < s2_len:
+                if float(s2[i][0]) < float(s1[0][0]):
+                    penalty = lossFunction(T, float(s2[i][0]), float(s1[0][0]), method, i, j)
+                    H[i][j] = max(H[i][j] - penalty, 0)
+
 
 def TSW_scoreMat(s1,s1_len,s2,s2_len,g,T,H,TR,TC,traceMat,s,method):
 	#initialise time penalty at 0
@@ -153,7 +232,6 @@ def TSW_scoreMat(s1,s1_len,s2,s2_len,g,T,H,TR,TC,traceMat,s,method):
 			j += 1
 
 		i += 1
-
 
 def find_best_score(H,s2_len,s1_len,mem,verbose):
 	mem_index = []
