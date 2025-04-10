@@ -18,3 +18,4 @@ vignettes/data/Artemis_Vignette_5.3_0.8.duckdb.wal
 *.zip
 /output*
 Test*.Rds
+main_test.py
