@@ -214,10 +214,32 @@ validConditions <- function(){
 }
 
 #' Load the default regimen group dataframe
+#' @param absolute Optional. Absolute path to a custom `.rda` file containing the `validdrugs` dataset. If not provided, the function loads from the `ARTEMIS` package.
 #' @export
-loadGroups <- function() {
-  #data("regimengroups", package = "ARTEMIS")
-  return(ARTEMIS::regimengroups)
+loadGroups <- function(absolute=NULL) {
+   if (!is.null(absolute)) {
+    if (!file.exists(absolute)) {
+      stop(paste("Error: The specified file", absolute, "was not found."))
+    }
+    
+    temp_env <- new.env()
+    load(absolute, envir = temp_env)
+    
+    # Ensure `regimengroups` exists after loading
+    if (!exists("regimengroups", envir = temp_env)) {
+      stop("Error: Loaded file does not contain a dataset named 'regimengroups'.")
+    }
+    
+    regimengroups <- temp_env$regimengroups
+  } else {
+    data("regimengroups", package = "ARTEMIS")
+    
+    if (!exists("regimengroups")) {
+      stop("Error: Failed to load 'regimengroups' from ARTEMIS package.")
+    }
+  }
+  
+  return(regimengroups)
 }
 
 #' Load the default regimen group dataframe

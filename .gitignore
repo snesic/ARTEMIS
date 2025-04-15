@@ -20,3 +20,5 @@ vignettes/data/Artemis_Vignette_5.3_0.8.duckdb.wal
 Test*.Rds
 main_test.py
 *.pyc
+.tmp
+__pycache__
