@@ -54,7 +54,7 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
     drugs = tolower(drugs)
     # which regimens contain at least one drug from the patient j
     which_regimens = lapply(regimens_list, 
-                            function(x, y) length(intersect(x, y)) / length(unique(x)) > 0.5, 
+                            function(x, y) length(intersect(x, y)) > 0,  # or length(intersect(x, y)) / length(unique(x)) > 0.5
                             y = drugs)    
     which_regimens = unlist(which_regimens)
     
