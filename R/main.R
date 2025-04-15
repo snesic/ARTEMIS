@@ -35,6 +35,12 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
 
   cli::cat_bullet(paste("Processing ",dim(stringDF)[1]," patients and ",dim(regimens)[1]," regimens...",sep=""),
              bullet_col = "yellow", bullet = "info")
+  
+  # compare only to regimens that have at least one overlapping drug
+  # remove time and create a vector of drugs per regimen
+  regimens_list = gsub("[0-9.]", "", regimens$shortString)
+  regimens_list = strsplit(x = regimens_list, split = ";")
+  
 
   for(j in c(1:dim(stringDF)[1])) {
 
@@ -44,11 +50,26 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
     colnames(output) <- c("regName","Regimen","DrugRecord","Score","regimen_Start","regimen_End",
                           "drugRec_Start","drugRec_End","Aligned_Seq_len","totAlign","adjustedS","personID")
 
-    for(i in c(1:dim(regimens)[1])) {
+    drugs = unlist(lapply(drugRecord, tail, 1))
+    drugs = tolower(drugs)
+    # which regimens contain at least one drug from the patient j
+    which_regimens = lapply(regimens_list, 
+                            function(x, y) length(intersect(x, y)) > 0,  # or length(intersect(x, y)) / length(unique(x)) > 0.5
+                            y = drugs)    
+    which_regimens = unlist(which_regimens)
+    
+    selected_regimens = regimens[which_regimens, ]
+    print("for patient:")
+    print(j)
+    print("No regimens selected:")
+    print(sum(which_regimens))
 
-      regimen <- encode(regimens[i,]$shortString)
+    
+    for(i in c(1:dim(selected_regimens)[1])) {
+        
+      regimen <- encode(selected_regimens[i,]$shortString)
 
-      regName <- regimens[i,]$regName
+      regName <- selected_regimens[i,]$regName
 
       output_temp <- align(regimen = regimen,
                            regName = regName,
