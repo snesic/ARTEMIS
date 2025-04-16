@@ -54,17 +54,18 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
     drugs = tolower(drugs)
     # which regimens contain at least one drug from the patient j
     which_regimens = lapply(regimens_list, 
-                            function(x, y) length(intersect(x, y)) > 0,  # or length(intersect(x, y)) / length(unique(x)) > 0.5
+                            function(x, y) length(intersect(x, y)) / length(unique(x)) > 0.99,  
                             y = drugs)    
     which_regimens = unlist(which_regimens)
     
-    selected_regimens = regimens[which_regimens, ]
-    print("for patient:")
-    print(j)
-    print("No regimens selected:")
-    print(sum(which_regimens))
+    #print(paste("for patient:", j, "number of reg:", sum(which_regimens))
 
-    
+    if (sum(which_regimens) == 0) {
+        print(paste("No regimens for", stringDF[j,]$person_id))
+      next
+    }
+    selected_regimens = regimens[which_regimens, ]
+
     for(i in c(1:dim(selected_regimens)[1])) {
         
       regimen <- encode(selected_regimens[i,]$shortString)
