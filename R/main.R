@@ -89,6 +89,7 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
       if(dim(output_temp)[1] > 1){
 
         output_temp$personID <- stringDF[j,]$person_id
+        output_temp$shortString <- selected_regimens[i,]$shortString
 
         output <- rbind(output,output_temp)
 

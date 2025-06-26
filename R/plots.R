@@ -45,19 +45,21 @@ removeOverlaps <- function(output, drugRec, drugDF) {
     
     outputDF <- output %>%
         dplyr::filter(.data$Score != "") %>%
-        dplyr::select(regName, Score,
-                      drugRec_Start, drugRec_End,
-                      adjustedS, totAlign)
+        dplyr::select(.data$regName, .data$shortString, 
+                      .data$Regimen, .data$Score,
+                      .data$drugRec_Start, .data$drugRec_End,
+                      .data$adjustedS, .data$totAlign)
     
     regCount <- output[is.na(output$adjustedS),]
     
-    regCount <- regCount %>%
-        dplyr::rowwise() %>%
-        dplyr::mutate(compNo = length(unique(gsub("[0-9]*\\.", "", 
-                                                  unlist(strsplit(.data$Regimen,";|~")))))) %>%
-        dplyr::select(regName, compNo)
     
-    regCount <- regCount[!duplicated(paste(regCount$regName, regCount$compNo)),]
+    regCount <- regCount %>%
+        rowwise() %>%
+        mutate(
+            compNo = length(unique(unlist(strsplit(Regimen, ";|~"))))
+        ) %>%
+        select(.data$regName, .data$shortString, .data$compNo) %>% 
+        dplyr::distinct()
     
     outputDF$drugRec_Start <- as.numeric(outputDF$drugRec_Start)
     outputDF$drugRec_End <- as.numeric(outputDF$drugRec_End)
@@ -120,7 +122,7 @@ removeOverlaps <- function(output, drugRec, drugDF) {
     # SECOND overlap removal - removing low component high scoring regimens
     # compNo - number of components
     data.table::setDT(regCount)
-    outputDF <- merge(outputDF, regCount, by = "regName")
+    outputDF <- merge(outputDF, regCount, by = c("regName", "shortString"))
     outputDF[, index := .I]
     
     data.table::setorder(outputDF, t_start, t_end)
@@ -187,7 +189,7 @@ combineOverlaps <- function(output, regimenCombine) {
             dplyr::mutate(prev_end = ifelse(.data$regName ==
                                                 dplyr::lag(.data$regName),
                                             dplyr::lag(.data$t_end), 0))
-        outputTemp[1,11] <- 0
+        outputTemp[1, "prev_end"] <- 0
         
         outputTemp <- outputTemp %>%
             dplyr::mutate(overlap = outputTemp$t_start <= outputTemp$prev_end+regimenCombine)
