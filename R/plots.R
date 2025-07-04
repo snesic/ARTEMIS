@@ -58,7 +58,7 @@ removeOverlaps <- function(output, drugRec, drugDF) {
         mutate(
             compNo = length(unique(unlist(strsplit(Regimen, ";|~"))))
         ) %>%
-        select(.data$regName, .data$shortString, .data$compNo) %>% 
+        select(.data$regName, .data$Regimen, .data$compNo) %>% 
         dplyr::distinct()
     
     outputDF$drugRec_Start <- as.numeric(outputDF$drugRec_Start)
@@ -122,9 +122,8 @@ removeOverlaps <- function(output, drugRec, drugDF) {
     # SECOND overlap removal - removing low component high scoring regimens
     # compNo - number of components
     data.table::setDT(regCount)
-    outputDF <- merge(outputDF, regCount, by = c("regName", "shortString"))
+    outputDF <- merge(outputDF, regCount, by = c("regName"), allow.cartesian = T)
     outputDF[, index := .I]
-    
     data.table::setorder(outputDF, t_start, t_end)
     outputDF_overlap <- data.table::copy(outputDF)
     data.table::setkey(outputDF_overlap, t_start, t_end)
@@ -311,7 +310,7 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
 
   # SECOND overlap removal - removing low component high soring regimens
 
-  outputDF <- merge(outputDF,regCount,by = "regName")
+  outputDF <- merge(outputDF, regCount, by = "regName")
 
   toRemove <- c()
 
