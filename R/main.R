@@ -35,6 +35,12 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
 
   cli::cat_bullet(paste("Processing ",dim(stringDF)[1]," patients and ",dim(regimens)[1]," regimens...",sep=""),
              bullet_col = "yellow", bullet = "info")
+  
+  # compare only to regimens that have at least one overlapping drug
+  # remove time and create a vector of drugs per regimen
+  regimens_list = gsub("[0-9.]", "", regimens$shortString)
+  regimens_list = strsplit(x = regimens_list, split = ";")
+  
 
   for(j in c(1:dim(stringDF)[1])) {
 
@@ -44,11 +50,27 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
     colnames(output) <- c("regName","Regimen","DrugRecord","Score","regimen_Start","regimen_End",
                           "drugRec_Start","drugRec_End","Aligned_Seq_len","totAlign","adjustedS","personID")
 
-    for(i in c(1:dim(regimens)[1])) {
+    drugs = unlist(lapply(drugRecord, tail, 1))
+    drugs = tolower(drugs)
+    # which regimens contain at least one drug from the patient j
+    which_regimens = lapply(regimens_list, 
+                            function(x, y) length(intersect(x, y)) / length(unique(x)) > 0.99,  
+                            y = drugs)    
+    which_regimens = unlist(which_regimens)
+    
+    #print(paste("for patient:", j, "number of reg:", sum(which_regimens))
 
-      regimen <- encode(regimens[i,]$shortString)
+    if (sum(which_regimens) == 0) {
+        print(paste("No regimens for", stringDF[j,]$person_id))
+      next
+    }
+    selected_regimens = regimens[which_regimens, ]
 
-      regName <- regimens[i,]$regName
+    for(i in c(1:dim(selected_regimens)[1])) {
+        
+      regimen <- encode(selected_regimens[i,]$shortString)
+
+      regName <- selected_regimens[i,]$regName
 
       output_temp <- align(regimen = regimen,
                            regName = regName,
@@ -67,6 +89,7 @@ generateRawAlignments <- function(stringDF, regimens, g, Tfac, s=NA, verbose, me
       if(dim(output_temp)[1] > 1){
 
         output_temp$personID <- stringDF[j,]$person_id
+        output_temp$shortString <- selected_regimens[i,]$shortString
 
         output <- rbind(output,output_temp)
 
@@ -125,7 +148,7 @@ processAlignments <- function(rawOutput, regimenCombine, regimens = "none", writ
 
     newOutput <- rawOutput[rawOutput$personID == IDs_All[i],]
 
-    processed <- plotOutput(newOutput, returnDat = T, returnDrugs = FALSE)
+    processed <- plotOutput(newOutput, regimenCombine = regimenCombine, returnDat = T, returnDrugs = FALSE)
 
     progress(x = i, max = length(IDs_All))
 
@@ -197,72 +220,73 @@ processAlignments <- function(rawOutput, regimenCombine, regimens = "none", writ
 #' @param discontinuationTime The number of days to use to indicate treatment discontinuation
 #' @return A processed alignment dataframe with added era data relating to first/second/other sequencing
 #' @export
-calculateEras <- function(processedAll, discontinuationTime = 120){
-
+calculateEras <- function(processedAll, discontinuationTime = 120) {
   IDs_All <- unique(processedAll$personID)
-  processedEras <- processedAll[0,]
+  processedEras <- processedAll[0, ]
 
-  for(i in c(1:length(IDs_All))){
+  result_list <- vector("list", length(IDs_All))  # Preallocate list
 
-    tempDF <- processedAll[processedAll$personID == IDs_All[i],]
-
-    tempDF <- tempDF[order(tempDF$t_start),]
-    toRemove <- c()
-
-    if(dim(tempDF)[1]>1){
-      for(i in c(2:length(tempDF$component))){
-        if(tempDF[i,]$t_start < tempDF[i-1,]$t_end){
-          toRemove <- c(toRemove,i)
-        }
+  for (i in c(1:length(IDs_All))) {
+      tempDF <- processedAll[processedAll$personID == IDs_All[i], ]
+      
+      tempDF <- tempDF[order(tempDF$t_start), ]
+      toRemove <- c()
+      
+      if (nrow(tempDF) > 1) {
+          for (ic in c(2:length(tempDF$component))) {
+              if (tempDF[ic, ]$t_start < tempDF[ic - 1, ]$t_end) {
+                  toRemove <- c(toRemove, ic)
+              }
+          }
       }
-    }
 
-    if(length(toRemove) > 0){
-      tempDF <- tempDF[-toRemove,]
-    }
+      if (length(toRemove) > 0) {
+          tempDF <- tempDF[-toRemove, ]
+      }
+      
+      tempDF <- tempDF %>%
+          dplyr::mutate(timeToNextRegimen = dplyr::lead(t_start) - t_end)
+      
+      tempDF <- tempDF %>%
+          dplyr::mutate(
+              lag = dplyr::lag(.data$timeToNextRegimen),
+              delete = ifelse((
+                  dplyr::lag(.data$timeToNextRegimen) < discontinuationTime &
+                      component == dplyr::lag(component)
+              ),
+              "Y",
+              "N"
+              )
+          )
+      
+      tempDF[1, ]$delete <- "N"
+      tempDF1 <- tempDF %>%
+          mutate(newLine = cumsum(delete == "N")) %>%
+          summarise(
+              adjustedS = sum(adjustedS * (t_end - t_start) / sum(t_end - t_start)),
+              t_start = min(t_start),
+              t_end = max(t_end),
+              timToEod = min(timeToEOD),
+              .by = c(component, newLine, personID)
+          ) %>%
+          mutate(
+              regLength = t_end - t_start,
+              timeToNextRegimen = lag(t_start, 1) - t_end,
+              First_Line = 1 * (row_number() == 1),
+              Second_Line = 1 * (row_number() == 2),
+              Other = 1 * (row_number() > 2)
+          )
+      
+      tempDF$timeToNextRegimen[tempDF$timeToNextRegimen < 0] <- 0
 
-    tempDF <- tempDF %>%
-      dplyr::mutate(timeToNextRegimen = dplyr::lead(t_start) - t_end)
-
-    tempDF <- tempDF %>%
-      dplyr::mutate(lag = dplyr::lag(.data$timeToNextRegimen),
-                    delete = ifelse((dplyr::lag(.data$timeToNextRegimen) < discontinuationTime &
-                                       component == dplyr::lag(component)),"Y","N"))
-
-    tempDF[1,]$delete <- "N"
-    tempDF <- tempDF[tempDF$delete != "Y",!colnames(tempDF) %in% c("delete")]
-
-    changeIndex <- which(tempDF$t_start !=
-                           dplyr::lag(tempDF$t_start))
-
-    tempDF$First_Line <- 1
-    #if(dim(tempDF)[1] > 1){
-    #  tempDF[-1,]$First_Line <- 0
-    #}
-    tempDF$Second_Line <- 0
-    tempDF$Other <- 0
-
-    if(length(changeIndex) > 0){
-      tempDF[changeIndex[1],]$First_Line <- 0
-      tempDF[changeIndex[1],]$Second_Line <- 1
-    }
-
-    if(length(changeIndex) > 1){
-      tempDF[changeIndex[-1],]$First_Line <- 0
-      tempDF[changeIndex[-1],]$Second_Line <- 0
-      tempDF[changeIndex[-1],]$Other <- 1
-    }
-
-    processedEras <- rbind(processedEras,tempDF)
-
-    #Handle overlapping regimens
-    processedEras$timeToNextRegimen[processedEras$timeToNextRegimen < 0] <- 0
-
-
+      result_list[[i]] <- tempDF      
+      
   }
 
-  return(processedEras)
+  processedEras <- dplyr::bind_rows(result_list)
 
+  return(processedEras)
+    
 }
 
 #' Generates a data frame containing summary stats from processed regimen data
