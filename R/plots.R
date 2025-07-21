@@ -54,16 +54,13 @@ no_unique_aligned_drugs <- function(regimen) {
 #' 
 removeOverlaps <- function(output, drugRec, drugDF) {
     
-    outputDF <- output %>%
+    df <- output %>%
         dplyr::filter(Score != "") %>%
-        dplyr::select(regName, shortString, 
-                      Regimen, Score,
-                      drugRec_Start, drugRec_End,
-                      adjustedS, totAlign)
+        dplyr::select(regName, shortString, Regimen, Score,
+                      drugRec_Start, drugRec_End, adjustedS, totAlign)
         
-
-    regCount <- output %>%
-        dplyr::filter(!is.na(adjustedS)) %>%
+    # get number of components in each regimen variant
+    regCount <- df %>%
         rowwise() %>%
         mutate(
             compNo = no_unique_aligned_drugs(Regimen) 
@@ -71,39 +68,33 @@ removeOverlaps <- function(output, drugRec, drugDF) {
         select(regName, Regimen, compNo) %>% 
         dplyr::distinct()
 
+    # Convert columns to numeric
+    df <- df %>%
+      dplyr::mutate(across(c(drugRec_Start, drugRec_End, totAlign), as.numeric))
+    
+    df <- df %>%
+        dplyr::arrange(drugRec_Start)
 
-    outputDF$drugRec_Start <- as.numeric(outputDF$drugRec_Start)
-    outputDF$drugRec_End <- as.numeric(outputDF$drugRec_End)
-    outputDF$totAlign <- as.numeric(outputDF$totAlign)
-    
-    outputDF <- outputDF %>%
-        dplyr::arrange(.data$drugRec_Start)
-    
-    # outputDF$drugRec_Start <- outputDF$drugRec_Start + 1
-    # outputDF$drugRec_End <- outputDF$drugRec_End + 1
-    
-    if(min(outputDF$drugRec_Start) <= 0){
-        outputDF[outputDF$drugRec_Start <= 0,]$drugRec_Start <- 1
-    }
-    
-    if(max(outputDF$drugRec_End) > max(drugDF$index)){
-        outputDF[outputDF$drugRec_End > max(drugDF$index),]$drugRec_End <- max(drugDF$index)
-    }
-    
-    outputDF$t_start <- drugDF[outputDF$drugRec_Start,]$t_start
-    outputDF$t_end <- drugDF[outputDF$drugRec_End,]$t_start
+    # Ensure drugRec_Start and drugRec_End are within valid range
+    df <- df %>%
+      dplyr::mutate(drugRec_Start = ifelse(drugRec_Start <= 0, 1, drugRec_Start),
+                    drugRec_End = ifelse(drugRec_End > max(drugDF$index), max(drugDF$index), drugRec_End))
+ 
+
+    df$t_start <- drugDF[df$drugRec_Start,]$t_start
+    df$t_end <- drugDF[df$drugRec_End,]$t_start
 
 
     # Convert to data.table to do overlap and drop lower scored regimens
-    data.table::setDT(outputDF)
-    data.table::setorder(outputDF, drugRec_Start, drugRec_End)
-    outputDF[, index := .I]
+    data.table::setDT(df)
+    data.table::setorder(df, drugRec_Start, drugRec_End)
+    df[, index := .I]
     
-    outputDF_overlap <- data.table::copy(outputDF)
-    data.table::setkey(outputDF_overlap, drugRec_Start, drugRec_End)
+    df_overlap <- data.table::copy(df)
+    data.table::setkey(df_overlap, drugRec_Start, drugRec_End)
     
     # Find overlaps where regName is different
-    overlaps <- data.table::foverlaps(outputDF, outputDF_overlap, nomatch = 0, 
+    overlaps <- data.table::foverlaps(df, df_overlap, nomatch = 0, 
                           by.x = c("drugRec_Start", "drugRec_End"), 
                           by.y = c("drugRec_Start", "drugRec_End"))
     overlaps <- overlaps[regName != i.regName]
@@ -127,19 +118,19 @@ removeOverlaps <- function(output, drugRec, drugDF) {
         }
     }
     
-    outputDF <- outputDF[!index %in% removed]
-    outputDF[, index := NULL]
+    df <- df[!index %in% removed]
+    df[, index := NULL]
 
     # SECOND overlap removal - removing low component high scoring regimens
     # compNo - number of components
     data.table::setDT(regCount)
-    outputDF <- merge(outputDF, regCount, by = c("regName", "Regimen"))
-    outputDF[, index := .I]
-    data.table::setorder(outputDF, t_start, t_end)
-    outputDF_overlap <- data.table::copy(outputDF)
-    data.table::setkey(outputDF_overlap, t_start, t_end)
+    df <- merge(df, regCount, by = c("regName", "Regimen"))
+    df[, index := .I]
+    data.table::setorder(df, t_start, t_end)
+    df_overlap <- data.table::copy(df)
+    data.table::setkey(df_overlap, t_start, t_end)
 
-    overlaps <- data.table::foverlaps(outputDF, outputDF_overlap, nomatch = 0, 
+    overlaps <- data.table::foverlaps(df, df_overlap, nomatch = 0, 
                           by.x = c("t_start", "t_end"), 
                           by.y = c("t_start", "t_end"))
     
@@ -148,17 +139,17 @@ removeOverlaps <- function(output, drugRec, drugDF) {
     toRemove <- overlaps[compNo != i.compNo, 
                          .(remove = ifelse(compNo < i.compNo, index, i.index))]$remove
     
-    outputDF <- outputDF[!index %in% toRemove]
+    df <- df[!index %in% toRemove]
     
     # Final overlap removal - sub-regimens
     # Ensure sorted order for foverlaps
     
-    data.table::setorder(outputDF, t_start, t_end)
-    outputDF_overlap <- data.table::copy(outputDF)
-    data.table::setkey(outputDF_overlap, t_start, t_end)
+    data.table::setorder(df, t_start, t_end)
+    df_overlap <- data.table::copy(df)
+    data.table::setkey(df_overlap, t_start, t_end)
     
     # Find overlapping intervals
-    overlaps <- data.table::foverlaps(outputDF, outputDF_overlap, nomatch = 0, 
+    overlaps <- data.table::foverlaps(df, df_overlap, nomatch = 0, 
                           by.x = c("t_start", "t_end"), 
                           by.y = c("t_start", "t_end"))
     
@@ -170,10 +161,10 @@ removeOverlaps <- function(output, drugRec, drugDF) {
     overlaps <- overlaps[adjustedS != i.adjustedS,]
     toRemove <- overlaps[,.(remove = ifelse(adjustedS < i.adjustedS, index, i.index))]$remove
     
-    outputDF <- outputDF[!index %in% toRemove][order(t_start)]
-    outputDF[, index := NULL]
-    outputDF <- as.data.frame(outputDF)
-    return(outputDF)
+    df <- df[!index %in% toRemove][order(t_start)]
+    df[, index := NULL]
+    df <- as.data.frame(df)
+    return(df)
 }
 
 
@@ -189,7 +180,7 @@ combineOverlaps <- function(output, regimenCombine) {
     # Regimen Combine - overall combine
     
     output$Score <- as.numeric(output$Score)
-    output$index <- c(1:length(output$drugRec_Start))
+    output$index <- 1:nrow(output)
     
     output_Combine_All <- output[0,]
     
@@ -202,7 +193,7 @@ combineOverlaps <- function(output, regimenCombine) {
         outputTemp[1, "prev_end"] <- 0
         
         outputTemp <- outputTemp %>%
-            dplyr::mutate(overlap = outputTemp$t_start <= outputTemp$prev_end+regimenCombine)
+            dplyr::mutate(overlap = outputTemp$t_start <= outputTemp$prev_end + regimenCombine)
         
         outputTemp$combiIndex <- cumsum(c(0, as.numeric(outputTemp$overlap==FALSE)))[-1]
         
@@ -212,7 +203,7 @@ combineOverlaps <- function(output, regimenCombine) {
             
             outputTemp$adjustedS <- as.numeric(outputTemp$adjustedS)
             
-            outputTemp_toSummarise <- outputTemp[outputTemp$combiIndex == index,] %>%
+            outputTemp_toSummarise <- outputTemp[outputTemp$combiIndex == index, ] %>%
                 dplyr::summarise(regName = unique(.data$regName),
                                  Score = mean(.data$Score),
                                  drugRec_Start = min(.data$drugRec_Start),
@@ -222,11 +213,11 @@ combineOverlaps <- function(output, regimenCombine) {
                                  t_end = max(.data$t_end),
                                  totAlign = sum(.data$totAlign))
             
-            output_summ_all <- rbind(output_summ_all,outputTemp_toSummarise)
+            output_summ_all <- rbind(output_summ_all, outputTemp_toSummarise)
             
         }
         
-        output_Combine_All <- rbind(output_Combine_All,output_summ_all)
+        output_Combine_All <- rbind(output_Combine_All, output_summ_all)
         
     }
     
