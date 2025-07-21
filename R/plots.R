@@ -33,6 +33,17 @@ createDrugDF <- function(drugRec){
 
 }
 
+#' Calculates the number of unique aligned drugs in a regimen
+#'
+no_unique_aligned_drugs <- function(regimen) {
+    
+    s = gsub("[0-9]*\\.", "", regimen)
+    
+    s = unlist(strsplit(s, ";|~"))
+    s = s[s!="__"]
+    return(length(unique(s)))
+}
+
 #' Removes overlapping regimens from an alignment output
 #'
 #' @param output An output dataframe created by align()
@@ -44,23 +55,23 @@ createDrugDF <- function(drugRec){
 removeOverlaps <- function(output, drugRec, drugDF) {
     
     outputDF <- output %>%
-        dplyr::filter(.data$Score != "") %>%
-        dplyr::select(.data$regName, .data$shortString, 
-                      .data$Regimen, .data$Score,
-                      .data$drugRec_Start, .data$drugRec_End,
-                      .data$adjustedS, .data$totAlign)
-    
-    regCount <- output[is.na(output$adjustedS),]
-    
-    
-    regCount <- regCount %>%
+        dplyr::filter(Score != "") %>%
+        dplyr::select(regName, shortString, 
+                      Regimen, Score,
+                      drugRec_Start, drugRec_End,
+                      adjustedS, totAlign)
+        
+
+    regCount <- output %>%
+        dplyr::filter(!is.na(adjustedS)) %>%
         rowwise() %>%
         mutate(
-            compNo = length(unique(unlist(strsplit(Regimen, ";|~"))))
+            compNo = no_unique_aligned_drugs(Regimen) 
         ) %>%
-        select(.data$regName, .data$Regimen, .data$compNo) %>% 
+        select(regName, Regimen, compNo) %>% 
         dplyr::distinct()
-    
+
+
     outputDF$drugRec_Start <- as.numeric(outputDF$drugRec_Start)
     outputDF$drugRec_End <- as.numeric(outputDF$drugRec_End)
     outputDF$totAlign <- as.numeric(outputDF$totAlign)
@@ -68,8 +79,8 @@ removeOverlaps <- function(output, drugRec, drugDF) {
     outputDF <- outputDF %>%
         dplyr::arrange(.data$drugRec_Start)
     
-    #outputDF$drugRec_Start <- outputDF$drugRec_Start + 1
-    #outputDF$drugRec_End <- outputDF$drugRec_End + 1
+    # outputDF$drugRec_Start <- outputDF$drugRec_Start + 1
+    # outputDF$drugRec_End <- outputDF$drugRec_End + 1
     
     if(min(outputDF$drugRec_Start) <= 0){
         outputDF[outputDF$drugRec_Start <= 0,]$drugRec_Start <- 1
@@ -122,7 +133,7 @@ removeOverlaps <- function(output, drugRec, drugDF) {
     # SECOND overlap removal - removing low component high scoring regimens
     # compNo - number of components
     data.table::setDT(regCount)
-    outputDF <- merge(outputDF, regCount, by = c("regName"), allow.cartesian = T)
+    outputDF <- merge(outputDF, regCount, by = c("regName", "Regimen"))
     outputDF[, index := .I]
     data.table::setorder(outputDF, t_start, t_end)
     outputDF_overlap <- data.table::copy(outputDF)
@@ -284,10 +295,10 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
         if(outputDF[i,]$drugRec_Start <= outputDF[j,]$drugRec_End &
            outputDF[i,]$drugRec_End >= outputDF[j,]$drugRec_Start){
           if(!(i %in% toRemove) & !(j %in% toRemove)){
-            sel <- outputDF[c(i,j),]
+            sel <- outputDF[c(i,j), ]
 
-            i_score <- sel[sel$index==i,]$adjustedS
-            j_score <- sel[sel$index==j,]$adjustedS
+            i_score <- sel[sel$index == i, ]$adjustedS
+            j_score <- sel[sel$index == j,]$adjustedS
 
             if(i_score == j_score){
               toRemove <- toRemove
@@ -301,7 +312,7 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
   }
 
   if(length(toRemove) > 0){
-    outputDF <- outputDF[-toRemove,] %>%
+    outputDF <- outputDF[-toRemove, ] %>%
       dplyr::arrange(.data$drugRec_Start)
   } else {
     outputDF <- outputDF %>%
@@ -314,16 +325,12 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
 
   toRemove <- c()
 
-  for(i in c(1:dim(outputDF)[1])){
-    for(j in c(i:dim(outputDF)[1])) {
-      if(i != j){
-        if(outputDF[i,]$t_start <= outputDF[j,]$t_end & outputDF[i,]$t_end >= outputDF[j,]$t_start){
+  for (i in c(1:dim(outputDF)[1])) {
+    for (j in c(i:dim(outputDF)[1])) {
+      if (i != j) {
+        if (outputDF[i,]$t_start <= outputDF[j,]$t_end & outputDF[i,]$t_end >= outputDF[j,]$t_start) {
           mostComps <- max(outputDF[c(i,j),]$compNo)
           toRemove <- c(toRemove,c(i,j)[outputDF[c(i,j),]$compNo < mostComps])
-
-          #if(outputDF[i,]$compNo == outputDF[j,]$compNo){
-          #  toRemove <- c(toRemove,c(i,j)[grep(" RT",outputDF[c(i,j),]$regName)])
-          #}
         }
       }
     }
@@ -331,24 +338,25 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
 
   toRemove <- unique(toRemove)
 
-  if(length(toRemove) > 0){
-    outputDF <- outputDF[-toRemove,] %>% dplyr::arrange(.data$t_start)
+  if (length(toRemove) > 0) {
+    outputDF <- outputDF[-toRemove,] %>% 
+      dplyr::arrange(.data$t_start)
   } else {
-    outputDF <- outputDF %>% dplyr::arrange(.data$t_start)
+    outputDF <- outputDF %>% 
+      dplyr::arrange(.data$t_start)
   }
 
   #Final overlap removal - sub-regimens
   toRemove <- c()
 
-  for(i in c(1:dim(outputDF)[1])){
-    for(j in c(i:dim(outputDF)[1])) {
-      if(i != j){
-        if(outputDF[i,]$regName == outputDF[j,]$regName){
-          if(outputDF[i,]$totAlign == outputDF[j,]$totAlign){
-            if(outputDF[i,]$t_start < outputDF[j,]$t_end & outputDF[j,]$t_start < outputDF[i,]$t_end){
+  for (i in c(1:dim(outputDF)[1])) {
+    for (j in c(i:dim(outputDF)[1])) {
+      if (i != j) {
+        if (outputDF[i,]$regName == outputDF[j,]$regName) {
+          if (outputDF[i,]$totAlign == outputDF[j,]$totAlign){
+            if (outputDF[i,]$t_start < outputDF[j,]$t_end & outputDF[j,]$t_start < outputDF[i,]$t_end) {
 
               highScore <- max(outputDF[c(i,j),]$adjustedS)
-
               toRemove <- c(toRemove,c(i,j)[outputDF[c(i,j),]$adjustedS < highScore])
 
             }
@@ -360,10 +368,12 @@ combineAndRemoveOverlaps <- function(output, drugRec, drugDF, regimenCombine) {
 
   toRemove <- unique(toRemove)
 
-  if(length(toRemove) > 0){
-    outputDF <- outputDF[-toRemove,] %>% dplyr::arrange(.data$t_start)
+  if (length(toRemove) > 0) {
+    outputDF <- outputDF[-toRemove,] %>% 
+      dplyr::arrange(.data$t_start)
   } else {
-    outputDF <- outputDF %>% dplyr::arrange(.data$t_start)
+    outputDF <- outputDF %>% 
+      dplyr::arrange(.data$t_start)
   }
 
   # Regimen Combine - overall combine
