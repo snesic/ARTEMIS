@@ -149,12 +149,13 @@ processAlignments <- function(rawOutput, regimenCombine, regimens = "none", writ
     newOutput <- rawOutput[rawOutput$personID == IDs_All[i],]
 
     processed <- plotOutput(newOutput, regimenCombine = regimenCombine, returnDat = T, returnDrugs = FALSE)
+    # processed <- postprocessDF(newOutput, regimenCombine = regimenCombine)
 
     progress(x = i, max = length(IDs_All))
 
     processed$personID <- as.character(processed$personID)
 
-    processedAll <- rbind(processedAll,processed)
+    processedAll <- rbind(processedAll, processed)
 
   }
 

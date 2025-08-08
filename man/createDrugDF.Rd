@@ -9,6 +9,9 @@ createDrugDF(drugRec)
 \arguments{
 \item{drugRec}{A drug record}
 }
+\value{
+A data.table object with drugs
+}
 \description{
 Creates a plottable data frame from a drug record
 }
