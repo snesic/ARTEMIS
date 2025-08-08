@@ -57,7 +57,7 @@ prepareDF <- function(output, drugDF) {
     df <- output %>%
         dplyr::distinct() %>%
         dplyr::filter(Score != "") %>%
-        dplyr::select(regName, shortString, Regimen, Score,
+        dplyr::select(personID, regName, shortString, Regimen, Score,
                       drugRec_Start, drugRec_End, adjustedS, totAlign)
         
     # Convert columns to numeric
@@ -113,8 +113,7 @@ removeOverlaps <- function(df) {
     overlaps <- data.table::foverlaps(df, df_overlap, nomatch = 0, 
                           by.x = c("drugRec_Start", "drugRec_End"), 
                           by.y = c("drugRec_Start", "drugRec_End"))
-    overlaps <- overlaps[regName != i.regName]
-
+    overlaps <- overlaps[regName != i.regName & index < i.index]
     removed <- integer(0)
     
     # Process overlaps row-wise and remove lower scored regimens
@@ -183,7 +182,6 @@ removeOverlaps <- function(df) {
     return(df)
 }
 
-
 #' Combines overlapping regimens from alignment output
 #'
 #' @param output An output dataframe created by align()
@@ -191,54 +189,40 @@ removeOverlaps <- function(df) {
 #' @export
 #' 
 #' 
-combineOverlaps <- function(output, regimenCombine) {
+combineOverlaps <- function(df, regimenCombine) {
     
     # Regimen Combine - overall combine
         
-    output_Combine_All <- output[0,]
+    dt = df
+    data.table::setDT(dt)
+
+    # We only merge same regimens, next to each other chronologically 
+    # We sort chronologically
+    # Create id for consecutive regimens and remove if distance is larger than regimenCombine
+    # TODO: remove regName to disable regimen overlap 
+    data.table::setorder(dt, regName, t_start, t_end)
+
+    dt[, run_id := cumsum(
+        c(TRUE, regName[-1] != regName[-.N] | (t_start[-1] - t_end[-.N]) >= regimenCombine)
+    )]
     
-    for(regimenCombi in unique(output$regName)){
-        outputTemp <- output[output$regName==regimenCombi,]
-        outputTemp <- outputTemp %>%
-            dplyr::mutate(prev_end = ifelse(.data$regName ==
-                                                dplyr::lag(.data$regName),
-                                            dplyr::lag(.data$t_end), 0))
-        outputTemp[1, "prev_end"] <- 0
-        
-        outputTemp <- outputTemp %>%
-            dplyr::mutate(overlap = outputTemp$t_start <= outputTemp$prev_end + regimenCombine)
-        
-        outputTemp$combiIndex <- cumsum(c(0, as.numeric(outputTemp$overlap==FALSE)))[-1]
-        
-        output_summ_all <- outputTemp[0,]
-        
-        for(index in unique(outputTemp$combiIndex)) {
-                        
-            outputTemp_toSummarise <- outputTemp %>%
-                dplyr::filter(.data$combiIndex == index) %>%
-                dplyr::summarise(regName = unique(.data$regName),
-                                 Score = mean(.data$Score),
-                                 drugRec_Start = min(.data$drugRec_Start),
-                                 drugRec_End = max(.data$drugRec_End),
-                                 adjustedS = mean(.data$adjustedS),
-                                 t_start = min(.data$t_start),
-                                 t_end = max(.data$t_end),
-                                 totAlign = sum(.data$totAlign))
-            
-            output_summ_all <- rbind(output_summ_all, outputTemp_toSummarise)
-            
-        }
-        
-        output_Combine_All <- rbind(output_Combine_All, output_summ_all)
-        
-    }
-    
-    output <- output_Combine_All %>%
-        dplyr::arrange(.data$t_start)
-    
-    return(output)
-    
+    df = dt %>% 
+      as.data.frame() %>% 
+      dplyr::group_by(personID, regName, run_id) %>% 
+      dplyr::summarise(
+                drugRec_Start = min(drugRec_Start),
+                drugRec_End = max(drugRec_End),
+                t_start = min(t_start),
+                t_end = max(t_end),
+                adjustedS = mean(adjustedS),
+                Score = mean(Score),
+                totAlign = sum(totAlign)) %>% 
+      dplyr::ungroup() %>%
+      dplyr::select(-run_id) 
+      return(df)
 }
+
+
 #' Postprocess alignment output
 #'
 #' @param output An output dataframe created by align()
