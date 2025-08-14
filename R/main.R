@@ -38,21 +38,20 @@ generateRawAlignments <- function(stringDF,
                                   method,
                                   writeOut = TRUE,
                                   outputName = "Output") {
-    output_all <- as.data.frame(matrix(nrow = 0, ncol = 12))
-    colnames(output_all) <- c(
-        "regName",
-        "Regimen",
-        "DrugRecord",
-        "Score",
-        "regimen_Start",
-        "regimen_End",
-        "drugRec_Start",
-        "drugRec_End",
-        "Aligned_Seq_len",
-        "totAlign",
-        "adjustedS",
-        "personID"
-    )
+    output_all <- data.frame(
+              regName        = character(),
+              Regimen        = character(),
+              DrugRecord     = character(),
+              Score          = numeric(),
+              regimen_Start  = numeric(),
+              regimen_End    = numeric(),
+              drugRec_Start  = numeric(),
+              drugRec_End    = numeric(),
+              Aligned_Seq_len = numeric(),
+              totAlign       = numeric(),
+              adjustedS = numeric(),
+              personID = character()
+            )
     
     cli::cat_bullet(
         paste(
@@ -73,24 +72,10 @@ generateRawAlignments <- function(stringDF,
     regimens_list = strsplit(x = regimens_list, split = ";")
     
     
-    for (j in c(1:nrow(stringDF))) {
+    for (j in seq_len(nrow(stringDF))) {
         drugRecord <- encode(stringDF[j, ]$seq)
-        
-        output <- as.data.frame(matrix(nrow = 0, ncol = 12))
-        colnames(output) <- c(
-            "regName",
-            "Regimen",
-            "DrugRecord",
-            "Score",
-            "regimen_Start",
-            "regimen_End",
-            "drugRec_Start",
-            "drugRec_End",
-            "Aligned_Seq_len",
-            "totAlign",
-            "adjustedS",
-            "personID"
-        )
+
+        output <- output_all[0, ]
         
         drugs = unlist(lapply(drugRecord, tail, 1))
         drugs = tolower(drugs)
@@ -132,7 +117,7 @@ generateRawAlignments <- function(stringDF,
                                            (output_temp$adjustedS > 0.501 | is.na(output_temp$adjustedS)), ]
             
             if (nrow(output_temp) > 1) {
-                output_temp$personID <- stringDF[j, ]$person_id
+                output_temp$personID <- as.character(stringDF[j, ]$person_id)
                 output_temp$shortString <- selected_regimens[i, ]$shortString
                 output <- rbind(output, output_temp)
                 

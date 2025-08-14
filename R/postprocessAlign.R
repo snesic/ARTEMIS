@@ -59,8 +59,6 @@ prepareDF <- function(output, drugDF) {
         dplyr::filter(Score != "") %>%
         dplyr::select(personID, regName, shortString, Regimen, Score,
                       drugRec_Start, drugRec_End, adjustedS, totAlign)
-
-    print(str(df))
         
     # Convert columns to numeric
     df <- df %>%
