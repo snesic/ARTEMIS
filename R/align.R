@@ -57,19 +57,18 @@ align <- function(regimen,
             s <- defaultSmatrix(unlist(regimen, recursive = F), drugRec)
         }
         
-        dat <- as.data.frame(matrix(nrow = 0, ncol = 10))
-        colnames(dat) <- c(
-            "regName",
-            "Regimen",
-            "DrugRecord",
-            "Score",
-            "regimen_Start",
-            "regimen_End",
-            "drugRec_Start",
-            "drugRec_End",
-            "Aligned_Seq_len",
-            "totAlign"
-        )
+        dat <- data.frame(
+              regName        = character(),
+              Regimen        = character(),
+              DrugRecord     = character(),
+              Score          = numeric(),
+              regimen_Start  = numeric(),
+              regimen_End    = numeric(),
+              drugRec_Start  = numeric(),
+              drugRec_End    = numeric(),
+              Aligned_Seq_len = numeric(),
+              totAlign       = numeric()
+            )
         
         for (i in c(1:length(regimen))) {
             temp_dat <- temporal_alignment(
@@ -86,18 +85,7 @@ align <- function(regimen,
             )
             temp_dat <- as.data.frame(temp_dat)
             
-            colnames(temp_dat) <- c(
-                "regName",
-                "Regimen",
-                "DrugRecord",
-                "Score",
-                "regimen_Start",
-                "regimen_End",
-                "drugRec_Start",
-                "drugRec_End",
-                "Aligned_Seq_len",
-                "totAlign"
-            )
+            names(temp_dat) <- names(dat)
             
             temp_dat[1, ]$Regimen <- decode(regimen[[i]])
             temp_dat[1, ]$DrugRecord <- decode(drugRec)

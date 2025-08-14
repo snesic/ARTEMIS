@@ -59,6 +59,8 @@ prepareDF <- function(output, drugDF) {
         dplyr::filter(Score != "") %>%
         dplyr::select(personID, regName, shortString, Regimen, Score,
                       drugRec_Start, drugRec_End, adjustedS, totAlign)
+
+    print(str(df))
         
     # Convert columns to numeric
     df <- df %>%
@@ -192,7 +194,7 @@ combineOverlaps <- function(df, regimenCombine) {
     
     # Regimen Combine - overall combine
         
-    dt = df
+    dt <- df
     data.table::setDT(dt)
 
     # We only merge same regimens, next to each other chronologically 
@@ -205,22 +207,19 @@ combineOverlaps <- function(df, regimenCombine) {
         c(TRUE, regName[-1] != regName[-.N] | (t_start[-1] - t_end[-.N]) >= regimenCombine)
     )]
     
-    df = dt %>% 
-      as.data.frame() %>% 
-      dplyr::group_by(personID, regName, run_id) %>% 
-      dplyr::summarise(
-                drugRec_Start = min(drugRec_Start),
-                drugRec_End = max(drugRec_End),
-                t_start = min(t_start),
-                t_end = max(t_end),
-                adjustedS = mean(adjustedS),
-                Score = mean(Score),
-                totAlign = sum(totAlign)) %>% 
-      dplyr::ungroup() %>%
-      dplyr::select(-run_id) %>%
-      dplyr::mutate(component = regName)
+    dt <- dt[, .(
+              drugRec_Start = min(drugRec_Start),
+              drugRec_End   = max(drugRec_End),
+              t_start       = min(t_start),
+              t_end         = max(t_end),
+              adjustedS     = mean(adjustedS),
+              Score         = mean(Score),
+              totAlign      = sum(totAlign)
+            ), by = .(personID, regName, run_id)
+            ][, run_id := NULL][, component := regName]
 
-      return(df)
+
+      return(as.data.frame(dt))
 }
 
 
@@ -253,7 +252,7 @@ postprocessDF <- function(output, regimenCombine = 28) {
       dplyr::arrange(t_start) %>%
       dplyr::mutate(timeToNextRegimen = dplyr::lead(t_start) - t_end)
 
-    df[nrow(df),]$timeToEOD <- endOfData - df[nrow(df),]$t_end
+  df[nrow(df),]$timeToEOD <- endOfData - df[nrow(df),]$t_end
 
   return(df)                
 }
