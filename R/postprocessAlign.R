@@ -6,30 +6,12 @@
 createDrugDF <- function(drugRec){
 
   drugDF <- as.data.frame(t(as.data.frame(drugRec, col.names = c(seq(1:length(drugRec))))))
-  drugDF[1,]$V1 <- 0
+  names(drugDF) <- c("t_gap", "component")
+  drugDF[1,]$t_gap <- 0
 
   #Assign each individual drug an occurrence period of roughly one day
-  drugDF$t_start <- cumsum(drugDF$V1)
-  drugDF$regimen <- "No"
-  drugDF$index <- c(1:length(drugDF$V1))
-
-  #Assign each block a y-height
-  drugDF$ymin <- -0.5
-  drugDF$ymax <- 0.5
-  j <- 0
-
-  for(i in unique(drugDF$V2)){
-    drugDF[drugDF$V2 == i,]$ymin <- drugDF[drugDF$V2 == i,]$ymin + (j*1.25)
-    drugDF[drugDF$V2 == i,]$ymax <- drugDF[drugDF$V2 == i,]$ymax + (j*1.25)
-    j = j + 1
-  }
-
-  colnames(drugDF) <- c("t_gap", "component", "t_start", "regimen", "index", "ymin", "ymax")
-
-  drugDF$t_start <- as.numeric(drugDF$t_start)
-  drugDF$t_end <- as.numeric(drugDF$t_start+0.9)
-  drugDF$ymin <- as.numeric(drugDF$ymin)
-  drugDF$ymax <- as.numeric(drugDF$ymax)
+  drugDF$t_start <- cumsum(drugDF$t_gap)
+  drugDF$index <- 1:length(drugDF$t_gap)
 
   return(drugDF)
 
@@ -56,14 +38,8 @@ prepareDF <- function(output, drugDF) {
     
     df <- output %>%
         dplyr::distinct() %>%
-        dplyr::filter(Score != "") %>%
-        dplyr::select(personID, regName, shortString, Regimen, Score,
-                      drugRec_Start, drugRec_End, adjustedS, totAlign)
-        
-    # Convert columns to numeric
-    df <- df %>%
-      dplyr::mutate(across(c(drugRec_Start, drugRec_End, totAlign, Score, adjustedS), as.numeric))
-    
+        dplyr::filter(!is.na(Score)) 
+            
     df <- df %>%
         dplyr::arrange(drugRec_Start)
 
@@ -230,7 +206,8 @@ combineOverlaps <- function(df, regimenCombine) {
 #' 
 postprocessDF <- function(output, regimenCombine = 28) {
 
-  drugRec <- encode(output[is.na(output$Score)|output$Score=="",][1,]$DrugRecord)
+  # The element that has no Score, contains the full patient drug record
+  drugRec <- encode(output[is.na(output$Score), ]$DrugRecord[1])
 
   output <- output %>%
     dplyr::distinct()

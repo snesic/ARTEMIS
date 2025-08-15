@@ -46,18 +46,8 @@ align <- function(regimen,
         reticulate::source_python(system.file("python/align.py", package = "ARTEMIS"), envir = globalenv())
         reticulate::source_python(system.file("python/main.py", package = "ARTEMIS"), envir = globalenv())
     }
-    
-    if (typeof(regimen[[1]]) == "list") {
-        if (typeof(regName) == "character") {
-            print("Multiple regimens but only one regname. Please check regnames.")
-            return(NA)
-        }
-        
-        if (is.na(s)) {
-            s <- defaultSmatrix(unlist(regimen, recursive = F), drugRec)
-        }
-        
-        dat <- data.frame(
+
+    dat <- data.frame(
               regName        = character(),
               Regimen        = character(),
               DrugRecord     = character(),
@@ -69,6 +59,17 @@ align <- function(regimen,
               Aligned_Seq_len = numeric(),
               totAlign       = numeric()
             )
+    
+    if (typeof(regimen[[1]]) == "list") {
+        if (typeof(regName) == "character") {
+            print("Multiple regimens but only one regname. Please check regnames.")
+            return(NA)
+        }
+        
+        if (is.na(s)) {
+            s <- defaultSmatrix(unlist(regimen, recursive = F), drugRec)
+        }
+        
         
         for (i in c(1:length(regimen))) {
             temp_dat <- temporal_alignment(
@@ -84,20 +85,23 @@ align <- function(regimen,
                 method
             )
             temp_dat <- as.data.frame(temp_dat)
-            
             names(temp_dat) <- names(dat)
-            
+            temp_dat <- temp_dat %>%
+                dplyr::mutate(across(c(Score, regimen_Start, regimen_End, 
+                                       drugRec_Start, drugRec_End,
+                                       Aligned_Seq_len, totAlign), 
+                              as.numeric))
+
             temp_dat[1, ]$Regimen <- decode(regimen[[i]])
             temp_dat[1, ]$DrugRecord <- decode(drugRec)
             temp_dat$Regimen <- gsub("^;", "", temp_dat$Regimen)
             temp_dat$DrugRecord <- gsub("^;", "", temp_dat$DrugRecord)
             
-            temp_dat$adjustedS <- as.numeric(temp_dat$Score) / as.numeric(temp_dat$totAlign)
+            temp_dat$adjustedS <- temp_dat$Score / temp_dat$totAlign
             
             dat <- rbind(dat, temp_dat)
-            
+   
         }
-        
         return(dat)
         
     } else if (typeof(regimen[[1]]) == "character") {
@@ -105,7 +109,7 @@ align <- function(regimen,
             s <- defaultSmatrix(regimen, drugRec)
         }
         
-        dat <- temporal_alignment(
+        temp_dat <- temporal_alignment(
             regimen,
             regName,
             drugRec,
@@ -117,32 +121,28 @@ align <- function(regimen,
             removeOverlap,
             method
         )
-        dat <- as.data.frame(dat)
+        temp_dat <- as.data.frame(temp_dat)
         
-        colnames(dat) <- c(
-            "regName",
-            "Regimen",
-            "DrugRecord",
-            "Score",
-            "regimen_Start",
-            "regimen_End",
-            "drugRec_Start",
-            "drugRec_End",
-            "Aligned_Seq_len",
-            "totAlign"
-        )
+        names(temp_dat) <- names(dat)
         
-        dat[1, ]$Regimen <- decode(regimen)
-        dat[1, ]$DrugRecord <- decode(drugRec)
-        dat$Regimen <- gsub("^;", "", dat$Regimen)
-        dat$DrugRecord <- gsub("^;", "", dat$DrugRecord)
+        temp_dat <- temp_dat %>%
+                dplyr::mutate(across(c(Score, regimen_Start, regimen_End, 
+                                       drugRec_Start, drugRec_End,
+                                       Aligned_Seq_len, totAlign), 
+                              as.numeric))
         
-        dat$adjustedS <- as.numeric(dat$Score) / as.numeric(dat$totAlign)
+        temp_dat[1, ]$Regimen <- decode(regimen)
+        temp_dat[1, ]$DrugRecord <- decode(drugRec)
+        temp_dat$Regimen <- gsub("^;", "", temp_dat$Regimen)
+        temp_dat$DrugRecord <- gsub("^;", "", temp_dat$DrugRecord)
         
-        dat <- dat %>%
-            filter(totAlign != 0, totAlign != -1, (adjustedS > 0 |
-                                                       is.na(adjustedS)))
+        temp_dat$adjustedS <- temp_dat$Score / temp_dat$totAlign
         
-        return(dat)
+        temp_dat <- temp_dat %>%
+            filter(totAlign != 0 | is.na(totAlign), 
+                   totAlign != -1 | is.na(totAlign), 
+                   (adjustedS > 0 | is.na(adjustedS)))
+
+        return(temp_dat)
     }
 }

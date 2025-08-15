@@ -38,20 +38,6 @@ generateRawAlignments <- function(stringDF,
                                   method,
                                   writeOut = TRUE,
                                   outputName = "Output") {
-    output_all <- data.frame(
-              regName        = character(),
-              Regimen        = character(),
-              DrugRecord     = character(),
-              Score          = numeric(),
-              regimen_Start  = numeric(),
-              regimen_End    = numeric(),
-              drugRec_Start  = numeric(),
-              drugRec_End    = numeric(),
-              Aligned_Seq_len = numeric(),
-              totAlign       = numeric(),
-              adjustedS = numeric(),
-              personID = character()
-            )
     
     cli::cat_bullet(
         paste(
@@ -71,11 +57,9 @@ generateRawAlignments <- function(stringDF,
     regimens_list = gsub("[0-9.]", "", regimens$shortString)
     regimens_list = strsplit(x = regimens_list, split = ";")
     
-    
+    output_all = list()
     for (j in seq_len(nrow(stringDF))) {
         drugRecord <- encode(stringDF[j, ]$seq)
-
-        output <- output_all[0, ]
         
         drugs = unlist(lapply(drugRecord, tail, 1))
         drugs = tolower(drugs)
@@ -92,6 +76,7 @@ generateRawAlignments <- function(stringDF,
         }
         selected_regimens = regimens[which_regimens, ]
         
+        output_patient = list()
         for (i in c(1:nrow(selected_regimens))) {
             regimen <- encode(selected_regimens[i, ]$shortString)
             
@@ -109,28 +94,30 @@ generateRawAlignments <- function(stringDF,
                 removeOverlap = removeOverlap,
                 method = method
             )
+            #output_temp$totAlign <- unlist(output_temp$totAlign)
             
-            output_temp$totAlign <- unlist(output_temp$totAlign)
-            
-            output_temp <- output_temp[(output_temp$totAlign > 1 |
-                                            output_temp$totAlign == "") &
-                                           (output_temp$adjustedS > 0.501 | is.na(output_temp$adjustedS)), ]
+            output_temp <- output_temp %>% 
+                dplyr::filter((totAlign > 1 | is.na(totAlign)) &
+                              (adjustedS > 0.501 | is.na(adjustedS)))
             
             if (nrow(output_temp) > 1) {
                 output_temp$personID <- as.character(stringDF[j, ]$person_id)
                 output_temp$shortString <- selected_regimens[i, ]$shortString
-                output <- rbind(output, output_temp)
+
+                output_patient[[i]] <- output_temp
                 
             }
             
         }
         
         progress(x = j, max = nrow(stringDF))
-        
-        output_all <- rbind(output_all, output)
+
+        output_all <- c(output_all, output_patient)
         
     }
     
+    output_all = dplyr::bind_rows(output_all)
+
     if (writeOut == TRUE) {
         cli::cat_bullet("Writing output...",
                         bullet_col = "yellow",
