@@ -4,11 +4,21 @@
 \alias{loadRegimens}
 \title{Load regimens for a given condition}
 \usage{
-loadRegimens(condition)
+loadRegimens(
+  condition,
+  absolute = NULL,
+  mapping = list(lungCancer = c("Thoraic Oncology", "Thoraic Oncology"), multipleMyeloma
+    = c("Multiple Myeloma"))
+)
 }
 \arguments{
-\item{condition}{A string indicating which regimen set to load
-Presently, the only condition fully mapped is lungCancer}
+\item{condition}{A string indicating which regimen set to load}
+
+\item{absolute}{Path to system regimen to use as reference
+Presently, the only condition fully mapped are lungCancer and multiple myeloma
+Edit: all conditions supported matching a name OR providing a mapping, see example}
+
+\item{mapping}{A named list of user provids condition to maping}
 }
 \description{
 Load regimens for a given condition

@@ -10,13 +10,13 @@ align(
   regimen,
   regName,
   drugRec,
-  g,
-  Tfac,
+  g = 0.4,
+  Tfac = 0.5,
   s = NA,
-  verbose,
-  mem,
-  removeOverlap,
-  method
+  verbose = 0,
+  mem = -1,
+  removeOverlap = 1,
+  method = "PropDiff"
 )
 }
 \arguments{

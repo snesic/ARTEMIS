@@ -4,7 +4,10 @@
 \alias{loadGroups}
 \title{Load the default regimen group dataframe}
 \usage{
-loadGroups()
+loadGroups(absolute = NULL)
+}
+\arguments{
+\item{absolute}{Optional. Absolute path to a custom `.rda` file containing the `validdrugs` dataset. If not provided, the function loads from the `ARTEMIS` package.}
 }
 \description{
 Load the default regimen group dataframe
