@@ -177,7 +177,6 @@ processAlignments <- function(rawOutput,
         processed <- postprocessDF(newOutput, regimenCombine = regimenCombine)
         
         progress(x = i, max = length(IDs_All))
-        processed$personID <- as.character(processed$personID)
         processedAll <- dplyr::bind_rows(processedAll, processed)
         
     }

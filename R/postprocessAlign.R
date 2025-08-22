@@ -209,9 +209,6 @@ postprocessDF <- function(output, regimenCombine = 28) {
   # The element that has no Score, contains the full patient drug record
   drugRec <- encode(output[is.na(output$Score), ]$DrugRecord[1])
 
-  output <- output %>%
-    dplyr::distinct()
-
   drugDF <- createDrugDF(drugRec)
   df <- prepareDF(output, drugDF)    
 
