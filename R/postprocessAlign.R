@@ -70,11 +70,11 @@ prepareDF <- function(output, drugDF) {
 removeOverlaps <- function(df) {
     # get number of components in each regimen variant
     regCount <- df %>%
-        rowwise() %>%
-        mutate(
+        dplyr::rowwise() %>%
+        dplyr::mutate(
             compNo = no_unique_aligned_drugs(Regimen) 
         ) %>%
-        select(regName, Regimen, compNo) %>% 
+        dplyr::select(regName, Regimen, compNo) %>% 
         dplyr::distinct()
 
     # Convert to data.table to do overlap and drop lower scored regimens

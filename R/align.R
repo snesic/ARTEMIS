@@ -87,9 +87,9 @@ align <- function(regimen,
             temp_dat <- as.data.frame(temp_dat)
             names(temp_dat) <- names(dat)
             temp_dat <- temp_dat %>%
-                dplyr::mutate(across(c(Score, regimen_Start, regimen_End, 
-                                       drugRec_Start, drugRec_End,
-                                       Aligned_Seq_len, totAlign), 
+                dplyr::mutate(dplyr::across(c(Score, regimen_Start, regimen_End, 
+                                            drugRec_Start, drugRec_End,
+                                            Aligned_Seq_len, totAlign), 
                               as.numeric))
 
             temp_dat[1, ]$Regimen <- decode(regimen[[i]])
@@ -126,9 +126,9 @@ align <- function(regimen,
         names(temp_dat) <- names(dat)
         
         temp_dat <- temp_dat %>%
-                dplyr::mutate(across(c(Score, regimen_Start, regimen_End, 
-                                       drugRec_Start, drugRec_End,
-                                       Aligned_Seq_len, totAlign), 
+                dplyr::mutate(dplyr::across(c(Score, regimen_Start, regimen_End, 
+                                              drugRec_Start, drugRec_End,
+                                              Aligned_Seq_len, totAlign), 
                               as.numeric))
         
         temp_dat[1, ]$Regimen <- decode(regimen)
@@ -139,9 +139,9 @@ align <- function(regimen,
         temp_dat$adjustedS <- temp_dat$Score / temp_dat$totAlign
         
         temp_dat <- temp_dat %>%
-            filter(totAlign != 0 | is.na(totAlign), 
-                   totAlign != -1 | is.na(totAlign), 
-                   (adjustedS > 0 | is.na(adjustedS)))
+            dplyr::filter(totAlign != 0 | is.na(totAlign), 
+                          totAlign != -1 | is.na(totAlign), 
+                          (adjustedS > 0 | is.na(adjustedS)))
 
         return(temp_dat)
     }
