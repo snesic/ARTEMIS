@@ -94,7 +94,6 @@ generateRawAlignments <- function(stringDF,
                 removeOverlap = removeOverlap,
                 method = method
             )
-            #output_temp$totAlign <- unlist(output_temp$totAlign)
             
             output_temp <- output_temp %>% 
                 dplyr::filter((totAlign > 1 | is.na(totAlign)) &
@@ -153,10 +152,7 @@ processAlignments <- function(rawOutput,
                               regimens = "none",
                               writeOut = TRUE,
                               outputName = "Output_Processed") {
-    IDs_All <- unique(rawOutput$personID)
-    
-    processedAll <- data.frame()
-    
+    IDs_All <- unique(rawOutput$personID)    
     cli::cat_bullet(
         paste(
             "Performing post-processing of ",
@@ -169,16 +165,16 @@ processAlignments <- function(rawOutput,
         bullet = "info"
     )
     
-    # Collect all tests here
+    # Postprocess each patient individually
+    processedAll <- data.frame()
+
     for (i in c(1:length(IDs_All))) {
         newOutput <- rawOutput[rawOutput$personID == IDs_All[i], ]
         
-        # processed <- plotOutput(newOutput, regimenCombine = regimenCombine, returnDat = T, returnDrugs = FALSE)
         processed <- postprocessDF(newOutput, regimenCombine = regimenCombine)
+        processedAll <- dplyr::bind_rows(processedAll, processed)   
         
         progress(x = i, max = length(IDs_All))
-        processedAll <- dplyr::bind_rows(processedAll, processed)
-        
     }
     
     if (writeOut == TRUE) {

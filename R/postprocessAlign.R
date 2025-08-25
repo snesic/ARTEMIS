@@ -9,7 +9,7 @@ createDrugDF <- function(drugRec){
   names(drugDF) <- c("t_gap", "component")
   drugDF[1,]$t_gap <- 0
 
-  #Assign each individual drug an occurrence period of roughly one day
+  # Assign each individual drug an occurrence period of roughly one day
   drugDF$t_start <- cumsum(drugDF$t_gap)
   drugDF$index <- 1:length(drugDF$t_gap)
 
@@ -40,9 +40,6 @@ prepareDF <- function(output, drugDF) {
         dplyr::distinct() %>%
         dplyr::filter(!is.na(Score)) 
             
-    df <- df %>%
-        dplyr::arrange(drugRec_Start)
-
     # Ensure drugRec_Start and drugRec_End are within valid range
     df <- df %>%
       dplyr::mutate(drugRec_Start = ifelse(drugRec_Start <= 0, 1, drugRec_Start),
