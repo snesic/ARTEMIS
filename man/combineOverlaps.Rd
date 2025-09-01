@@ -2,7 +2,10 @@
 % Please edit documentation in R/postprocessAlign.R
 \name{combineOverlaps}
 \alias{combineOverlaps}
-\title{Combines overlapping regimens from alignment output}
+\title{Combines overlapping regimens from alignment output
+We only merge same regimens, next to each other chronologically
+We sort chronologically
+Create id for consecutive regimens and remove if distance is larger than regimenCombine}
 \usage{
 combineOverlaps(df, regimenCombine)
 }
@@ -13,4 +16,7 @@ combineOverlaps(df, regimenCombine)
 }
 \description{
 Combines overlapping regimens from alignment output
+We only merge same regimens, next to each other chronologically
+We sort chronologically
+Create id for consecutive regimens and remove if distance is larger than regimenCombine
 }

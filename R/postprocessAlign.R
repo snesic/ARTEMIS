@@ -4,7 +4,6 @@
 #' @return A data.table object with drugs
 #'
 createDrugDF <- function(drugRec){
-
   drugDF <- as.data.frame(t(as.data.frame(drugRec, col.names = c(seq(1:length(drugRec))))))
   names(drugDF) <- c("t_gap", "component")
   drugDF[1,]$t_gap <- 0
@@ -20,11 +19,11 @@ createDrugDF <- function(drugRec){
 #' Calculates the number of unique aligned drugs in a regimen
 #'
 no_unique_aligned_drugs <- function(regimen) {
-    
     s = gsub("[0-9]*\\.", "", regimen)
     
     s = unlist(strsplit(s, ";|~"))
     s = s[s!="__"]
+
     return(length(unique(s)))
 }
 

@@ -10,7 +10,7 @@ removeOverlaps(df)
 \item{df}{A dataframe created by align() and processed by prepareDF()}
 }
 \value{
-A data.table object with removed overlaps
+A data.table object without removed overlaps
 }
 \description{
 Three overlap removal steps are performed:
