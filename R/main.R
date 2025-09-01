@@ -79,7 +79,6 @@ generateRawAlignments <- function(stringDF,
         output_patient = list()
         for (i in c(1:nrow(selected_regimens))) {
             regimen <- encode(selected_regimens[i, ]$shortString)
-            
             regName <- selected_regimens[i, ]$regName
             
             output_temp <- align(
@@ -94,10 +93,6 @@ generateRawAlignments <- function(stringDF,
                 removeOverlap = removeOverlap,
                 method = method
             )
-            
-            output_temp <- output_temp %>% 
-                dplyr::filter((totAlign > 1 | is.na(totAlign)) &
-                              (adjustedS > 0.501 | is.na(adjustedS)))
             
             if (nrow(output_temp) > 1) {
                 output_temp$personID <- as.character(stringDF[j, ]$person_id)
@@ -183,13 +178,7 @@ processAlignments <- function(rawOutput,
             append = FALSE
         ))
     }
-    
-    if (dim(processedAll[which(processedAll$timeToNextRegimen < 0), ])[1]) {
-        processedAll[which(processedAll$timeToNextRegimen < 0), ]$timeToNextRegimen <- 0
-    }
-    
-    processedAll$regLength <- (processedAll$t_end - processedAll$t_start) + 1
-    
+        
     if (!is(regimens, "data.frame")) {
         cli::cat_bullet(
             paste("Adding regimen cycle length data...", sep = ""),
