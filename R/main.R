@@ -101,10 +101,8 @@ generateRawAlignments <- function(stringDF,
             
             if (nrow(output_temp) > 1) {
                 output_temp$personID <- as.character(stringDF[j, ]$person_id)
-                output_temp$shortString <- selected_regimens[i, ]$shortString
 
                 output_patient[[i]] <- output_temp
-                
             }
             
         }
