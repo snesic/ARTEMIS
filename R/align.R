@@ -41,9 +41,6 @@ align <- function(regimen,
                   removeOverlap = 1,
                   method = "PropDiff") {
     if (!exists("temporal_alignment", mode = "function")) {
-        reticulate::source_python(system.file("python/init.py", package = "ARTEMIS"), envir = globalenv())
-        reticulate::source_python(system.file("python/score.py", package = "ARTEMIS"), envir = globalenv())
-        reticulate::source_python(system.file("python/align.py", package = "ARTEMIS"), envir = globalenv())
         reticulate::source_python(system.file("python/main.py", package = "ARTEMIS"), envir = globalenv())
     }
 
