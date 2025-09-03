@@ -2,7 +2,7 @@
 % Please edit documentation in R/postprocessAlign.R
 \name{createDrugDF}
 \alias{createDrugDF}
-\title{Creates a plottable data frame from a drug record}
+\title{Creates cumulative times for each drug in the drug record}
 \usage{
 createDrugDF(drugRec)
 }
@@ -13,5 +13,5 @@ createDrugDF(drugRec)
 A data.table object with drugs
 }
 \description{
-Creates a plottable data frame from a drug record
+Creates cumulative times for each drug in the drug record
 }
