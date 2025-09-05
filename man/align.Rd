@@ -10,22 +10,22 @@ align(
   regimen,
   regName,
   drugRec,
-  g,
-  Tfac,
+  g = 0.4,
+  Tfac = 0.5,
   s = NA,
-  verbose,
-  mem,
-  removeOverlap,
-  method
+  verbose = 0,
+  mem = -1,
+  removeOverlap = 1,
+  method = "PropDiff"
 )
 }
 \arguments{
 \item{regimen}{A sequence to be aligned, usually a short sequence defining a chemotherapy regimen,
 may contain multiple regimens if supplied as a list}
 
-\item{regName}{The name of the supplied regimen/s, may be a character or a list}
+\item{regName}{The name of the supplied regimen}
 
-\item{drugRec}{A longer sequence to be aligned, usually a patient's converted drug occurrence table}
+\item{drugRec}{A patient's converted drug occurrence table}
 
 \item{g}{A gap penalty supplied to the temporal needleman wunsch/smith waterman algorithms}
 
