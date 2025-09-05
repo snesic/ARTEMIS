@@ -4,7 +4,10 @@
 \alias{loadDrugs}
 \title{Load the default valid drugs dataframe}
 \usage{
-loadDrugs()
+loadDrugs(absolute = NULL)
+}
+\arguments{
+\item{absolute}{Optional. Absolute path to a custom `.rda` file containing the `validdrugs` dataset. If not provided, the function loads from the `ARTEMIS` package.}
 }
 \description{
 Load the default valid drugs dataframe

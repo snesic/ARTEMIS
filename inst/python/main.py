@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import math as math
-from re import search
+from re import search as search_python
 from re import findall
 from numpy import append
 from init import init_Hmat, init_TRmat, init_TCmat, init_traceMat
@@ -12,7 +12,7 @@ pd.options.display.max_columns = None
 
 
 def find_gaps(pat, seq):
-    gaps_init = search(pat, seq)
+    gaps_init = search_python(pat, seq)
     if gaps_init is not None:
         gaps = len(findall("__", gaps_init[0]))
     else:
