@@ -1,5 +1,13 @@
 #' Generate a set of processed alignments given a stringDF dataframe
-#' @param stringDF A stringDF dataframe
+#' @param stringDF A dataframe that contains patient IDs and seq columns. 
+#' Each seq should be a valid encoded drug record. Check example below.
+#' @examples
+#' stringDF <- data.frame(
+#'   person_id = c("P1", "P2"),
+#'   seq = c("7.cisplatin;0.etoposide;1.etoposide;1.etoposide;",
+#'           "0.paclitaxel;1.carboplatin;")
+#' )
+#' 
 #' @param regimens A regimen dataframe, containing required regimen shortStrings
 #' for testing
 #' @param g A gap penalty supplied to the temporal needleman wunsch/smith waterman algorithms
@@ -32,12 +40,23 @@ generateRawAlignments <- function(stringDF,
                                   g,
                                   Tfac,
                                   s = NA,
-                                  verbose,
+                                  verbose = 0,
                                   mem = -1,
                                   removeOverlap = -1,
-                                  method,
+                                  method = "PropDiff",
                                   writeOut = TRUE,
                                   outputName = "Output") {
+    # Input check: stop if stringDF is not a data.frame or has no rows                                
+    obj_name <- deparse(substitute(stringDF))
+    if (!is.data.frame(stringDF)) {
+        stop(paste0("Error: ", obj_name, " must be a data.frame object,",
+            "\nwith patients records and ", 
+            "person_id and seq columns."))
+    }
+    if (nrow(stringDF) == 0) { 
+        stop(paste0("Error: ", obj_name, 
+                    " is empty. No patient records found."))
+    }
     
     cli::cat_bullet(
         paste(

@@ -10,16 +10,17 @@ generateRawAlignments(
   g,
   Tfac,
   s = NA,
-  verbose,
+  verbose = 0,
   mem = -1,
   removeOverlap = -1,
-  method,
+  method = "PropDiff",
   writeOut = TRUE,
   outputName = "Output"
 )
 }
 \arguments{
-\item{stringDF}{A stringDF dataframe}
+\item{stringDF}{A dataframe that contains patient IDs and seq columns. 
+Each seq should be a valid encoded drug record. Check example below.}
 
 \item{regimens}{A regimen dataframe, containing required regimen shortStrings
 for testing}
@@ -60,4 +61,12 @@ A dataframe containing the relevant patients and their drug exposure strings
 }
 \description{
 Generate a set of processed alignments given a stringDF dataframe
+}
+\examples{
+stringDF <- data.frame(
+  person_id = c("P1", "P2"),
+  seq = c("7.cisplatin;0.etoposide;1.etoposide;1.etoposide;",
+          "0.paclitaxel;1.carboplatin;")
+)
+
 }
