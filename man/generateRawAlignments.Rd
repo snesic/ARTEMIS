@@ -2,7 +2,7 @@
 % Please edit documentation in R/main.R
 \name{generateRawAlignments}
 \alias{generateRawAlignments}
-\title{Generate a set of processed alignments given a stringDF dataframe}
+\title{Generate Alignments}
 \usage{
 generateRawAlignments(
   stringDF,
@@ -25,7 +25,7 @@ Each seq should be a valid encoded drug record. Check example below.}
 \item{regimens}{A regimen dataframe, containing required regimen shortStrings
 for testing}
 
-\item{g}{A gap penalty supplied to the temporal needleman wunsch/smith waterman algorithms}
+\item{g}{A gap penalty supplied to the temporal Needleman-Wunsch/Smith–Waterman algorithm}
 
 \item{Tfac}{The time penalty factor. All time penalties are calculated as a percentage of Tfac}
 
@@ -57,10 +57,12 @@ LogCosh         - The natural logarithm of the Cosh of the absolute difference o
 \item{outputName}{The name for a given written output}
 }
 \value{
-A dataframe containing the relevant patients and their drug exposure strings
+A data.frame containing regimen alignment results mapped onto patient records.
 }
 \description{
-Generate a set of processed alignments given a stringDF dataframe
+Generate processed alignments of treatment regimens using temporal 
+Needleman–Wunsch or Smith–Waterman algorithms. 
+The input regimens are aligned against patient drug records from stringDF data.frame.
 }
 \examples{
 stringDF <- data.frame(

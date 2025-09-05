@@ -1,4 +1,8 @@
-#' Generate a set of processed alignments given a stringDF dataframe
+#' Generate Alignments
+#' 
+#' Generate processed alignments of treatment regimens using temporal 
+#' Needleman–Wunsch or Smith–Waterman algorithms. 
+#' The input regimens are aligned against patient drug records from stringDF data.frame.
 #' @param stringDF A dataframe that contains patient IDs and seq columns. 
 #' Each seq should be a valid encoded drug record. Check example below.
 #' @examples
@@ -10,7 +14,7 @@
 #' 
 #' @param regimens A regimen dataframe, containing required regimen shortStrings
 #' for testing
-#' @param g A gap penalty supplied to the temporal needleman wunsch/smith waterman algorithms
+#' @param g A gap penalty supplied to the temporal Needleman-Wunsch/Smith–Waterman algorithm
 #' @param Tfac The time penalty factor. All time penalties are calculated as a percentage of Tfac
 #' @param s A substituion matrix, either user-defined or derived from defaultSmatrix.
 #' Will be auto-generated if left blank.
@@ -33,7 +37,7 @@
 #'
 #' @param writeOut A variable indicating whether to save the set of drug records
 #' @param outputName The name for a given written output
-#' @return A dataframe containing the relevant patients and their drug exposure strings
+#' @return A data.frame containing regimen alignment results mapped onto patient records.
 #' @export
 generateRawAlignments <- function(stringDF,
                                   regimens,
