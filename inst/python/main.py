@@ -68,20 +68,15 @@ def temporal_alignment(
     )
 
     for i in range(0, len(mem_index)):
-        s1_aligned_t, s2_aligned_t, totAligned_t = align_TSW(
+        s1_aligned_t, s2_aligned_t, totAligned_t, s1_start, s2_start = align_TSW(
             traceMat, s1, s2, s1_len, s2_len, mem_index[i]
         )
 
         s_f_len = max(len(findall(pat, s2_aligned_t)), len(findall(pat, s1_aligned_t)))
 
-        s1_gaps = find_gaps(pat_gap, s1_aligned_t)
         s1_end_gaps = find_gaps(pat_end_gap, s1_aligned_t)
-        s2_gaps = find_gaps(pat_gap, s2_aligned_t)
-        s2_end_gaps = find_gaps(pat_end_gap, s2_aligned_t)
 
-        s1_start = mem_index[i][1] - s_f_len
         s1_end = mem_index[i][1]
-        s2_start = mem_index[i][0] - s_f_len + s2_gaps + s2_end_gaps
         s2_end = mem_index[i][0] - s1_end_gaps
 
         if (s1_start + 1) > 1:
