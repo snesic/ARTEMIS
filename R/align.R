@@ -32,7 +32,8 @@
 #' @export
 align <- function(regimen,
                   regName,
-                  drugRec,
+                  personID,
+                  personSeq,
                   g = 0.4,
                   Tfac = 0.5,
                   s = NA,
@@ -43,6 +44,9 @@ align <- function(regimen,
     if (!exists("temporal_alignment", mode = "function")) {
         reticulate::source_python(system.file("python/main.py", package = "ARTEMIS"), envir = globalenv())
     }
+
+    regimen_list <- encode(regimen)
+    drugRec <- encode(personSeq)
 
     dat <- data.frame(
               regName        = character(),
@@ -63,7 +67,7 @@ align <- function(regimen,
     }
         
     temp_dat <- temporal_alignment(
-        regimen,
+        regimen_list,
         regName,
         drugRec,
         g,
@@ -75,6 +79,10 @@ align <- function(regimen,
         method
     )
     temp_dat <- as.data.frame(temp_dat)
+
+    if(nrow(temp_dat) == 0) {
+        return(data.frame())
+    }
     
     names(temp_dat) <- names(dat)
     
@@ -84,12 +92,11 @@ align <- function(regimen,
                                       Aligned_Seq_len, totAlign), 
                       as.numeric))
     
-    temp_dat[1, ]$Regimen <- decode(regimen)
-    temp_dat[1, ]$DrugRecord <- decode(drugRec)
-    temp_dat$Regimen <- gsub("^;", "", temp_dat$Regimen)
-    temp_dat$DrugRecord <- gsub("^;", "", temp_dat$DrugRecord)
+    temp_dat[1, ]$Regimen <- regimen
+    temp_dat[1, ]$DrugRecord <- personSeq
     
     temp_dat$adjustedS <- temp_dat$Score / temp_dat$totAlign
+    temp_dat$personID <- as.character(personID)
     
     temp_dat <- temp_dat %>%
         dplyr::filter(totAlign != 0 | is.na(totAlign), 
