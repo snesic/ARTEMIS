@@ -94,14 +94,16 @@ align <- function(regimen,
     
     temp_dat[1, ]$Regimen <- regimen
     temp_dat[1, ]$DrugRecord <- personSeq
+
+    temp_dat$Regimen_full <- regimen
+    temp_dat$DrugRecord_full <- personSeq
     
     temp_dat$adjustedS <- temp_dat$Score / temp_dat$totAlign
     temp_dat$personID <- as.character(personID)
     
     temp_dat <- temp_dat %>%
-        dplyr::filter(totAlign != 0 | is.na(totAlign), 
-                        totAlign != -1 | is.na(totAlign), 
-                        (adjustedS > 0 | is.na(adjustedS)))
+        dplyr::filter(!is.na(adjustedS) & !is.na(totAlign)) %>%
+        dplyr::filter(totAlign > 0 & adjustedS > 0)
 
     return(temp_dat)
 }

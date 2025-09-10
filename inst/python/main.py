@@ -33,9 +33,6 @@ def temporal_alignment(
     TC = init_TCmat(s1, s1_len, s2, s2_len)
     traceMat = init_traceMat(s1_len, s2_len)
 
-    # Track if secondary alignments have been collected
-    secondary = 0
-
     # Setup pattern for detecting sequence lengths, by number of "."s (Aligned drugs)
     pat = "\."
 
@@ -45,19 +42,7 @@ def temporal_alignment(
     pat_search = "__"
 
     # Init return Dat
-    returnDat = [
-        regName,
-        str(s1).strip("[]"),
-        str(s2).strip("[]"),
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-    ]
-    returnDat = np.array(returnDat, dtype=object)
+    returnDat = np.empty(10)
 
     # Impute score matrix, retrieve relevant vars
     TSW_scoreMat(s1, s1_len, s2, s2_len, g, T, H, TR, TC, traceMat, s, method)
