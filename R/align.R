@@ -49,16 +49,16 @@ align <- function(regimen,
     drugRec <- encode(personSeq)
 
     dat <- data.frame(
-              regName        = character(),
-              Regimen        = character(),
-              DrugRecord     = character(),
-              Score          = numeric(),
-              regimen_Start  = numeric(),
-              regimen_End    = numeric(),
-              drugRec_Start  = numeric(),
-              drugRec_End    = numeric(),
-              Aligned_Seq_len = numeric(),
-              totAlign       = numeric()
+        Regimen        = character(),
+        DrugRecord     = character(),
+        Score          = numeric(),
+        adjustedS      = numeric(),
+        regimen_Start  = numeric(),
+        regimen_End    = numeric(),
+        drugRec_Start  = numeric(),
+        drugRec_End    = numeric(),
+        Aligned_Seq_len = numeric(),
+        totAlign       = numeric()
             )
     
     
@@ -68,7 +68,6 @@ align <- function(regimen,
         
     temp_dat <- temporal_alignment(
         regimen_list,
-        regName,
         drugRec,
         g,
         Tfac,
@@ -87,18 +86,15 @@ align <- function(regimen,
     names(temp_dat) <- names(dat)
     
     temp_dat <- temp_dat %>%
-        dplyr::mutate(dplyr::across(c(Score, regimen_Start, regimen_End, 
+        dplyr::mutate(dplyr::across(c(Score, adjustedS, 
+                                      regimen_Start, regimen_End, 
                                       drugRec_Start, drugRec_End,
                                       Aligned_Seq_len, totAlign), 
                       as.numeric))
     
-    temp_dat[1, ]$Regimen <- regimen
-    temp_dat[1, ]$DrugRecord <- personSeq
-
+    temp_dat$regName <- regName
     temp_dat$Regimen_full <- regimen
     temp_dat$DrugRecord_full <- personSeq
-    
-    temp_dat$adjustedS <- temp_dat$Score / temp_dat$totAlign
     temp_dat$personID <- as.character(personID)
     
     temp_dat <- temp_dat %>%

@@ -22,7 +22,7 @@ def find_gaps(pat, seq):
 
 
 def temporal_alignment(
-    s1, regName, s2, g, T, s, verbose, mem=-1, removeOverlap=0, method="PropDiff"
+    s1, s2, g, T, s, verbose, mem=-1, removeOverlap=0, method="PropDiff"
 ):
     s1_len = len(s1)
     s2_len = len(s2)
@@ -35,11 +35,8 @@ def temporal_alignment(
 
     # Setup pattern for detecting sequence lengths, by number of "."s (Aligned drugs)
     pat = "\."
-
     # Setup pattern for detecting sequence gaps, by number of "__"s (Aligned gaps)
-    pat_gap = "(__;)+[0-9]+"
     pat_end_gap = "(__;)+__$|__$"
-    pat_search = "__"
 
     # Init return Dat
     returnDat = np.empty(10)
@@ -68,13 +65,15 @@ def temporal_alignment(
             totAligned_t = totAligned_t + (s1_end - (s1_start + 1))
             s_f_len = s_f_len + (s1_end - (s1_start + 1))
 
+        adjustedS = mem_score[i] / totAligned_t
+
         returnDat = append(
             returnDat,
             [
-                regName,
                 s1_aligned_t,
                 s2_aligned_t,
                 mem_score[i],
+                adjustedS,
                 s1_start + 1,
                 s1_end,
                 s2_start + 1,
