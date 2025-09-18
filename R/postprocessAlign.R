@@ -193,7 +193,7 @@ combineOverlaps <- function(df, regimenCombine) {
 #' @export
 #' 
 postprocessDF <- function(output, regimenCombine = 28) {
-    # Remove rows with NA score and low scoring or one drag alignments  
+    # Remove rows with NA score and low scoring or one drug alignments  
     df <- output %>% 
         dplyr::filter(totAlign > 1 & adjustedS > 0.501)
 
