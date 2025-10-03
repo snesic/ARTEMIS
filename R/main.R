@@ -47,9 +47,7 @@ generateRawAlignments <- function(stringDF,
                                   verbose = 0,
                                   mem = -1,
                                   removeOverlap = -1,
-                                  method = "PropDiff",
-                                  writeOut = FALSE,
-                                  outputName = "Output") {
+                                  method = "PropDiff") {
     # Input check: stop if stringDF is not a data.frame or has no rows                                
     obj_name <- deparse(substitute(stringDF))
     if (!is.data.frame(stringDF)) {
@@ -61,25 +59,24 @@ generateRawAlignments <- function(stringDF,
         stop(paste0("Error: ", obj_name, 
                     " is empty. No patient records found."))
     }
-    if (!exists("temporal_alignment_all", mode = "function")) {
+    if (!exists("align_patients_regimens", mode = "function")) {
         reticulate::source_python(system.file("python/main.py", package = "ARTEMIS"), envir = globalenv())
     }
 
-    output_all = temporal_alignment_all(stringDF, regimens)
+    output = align_patients_regimens(stringDF, regimens)
 
-    output_all <- output_all %>%
+    output <- output %>%
         dplyr::mutate(dplyr::across(c(Score, adjustedS, 
                                       regimen_Start, regimen_End, 
                                       drugRec_Start, drugRec_End,
                                       Aligned_Seq_len, totAlign), 
                                     as.numeric))
     
-    output_all <- output_all %>%
+    output <- output %>%
         dplyr::filter(!is.na(adjustedS) & !is.na(totAlign)) %>%
         dplyr::filter(totAlign > 0 & adjustedS > 0)
     
-    return(output_all)
-    
+    return(output)
 }
 
 
@@ -96,9 +93,7 @@ generateRawAlignments <- function(stringDF,
 #' @export
 processAlignments <- function(rawOutput,
                               regimenCombine,
-                              regimens = "none",
-                              writeOut = TRUE,
-                              outputName = "Output_Processed") {
+                              regimens = "none") {
     IDs_All <- unique(rawOutput$personID)    
     cli::cat_bullet(
         paste(
@@ -122,15 +117,6 @@ processAlignments <- function(rawOutput,
         processedAll <- dplyr::bind_rows(processedAll, processed)   
         
         progress(x = i, max = length(IDs_All))
-    }
-    
-    if (writeOut == TRUE) {
-        outputFile <- here::here()
-        suppressWarnings(write.csv(
-            file = paste(outputFile, "/", outputName, ".csv", sep = ""),
-            x = processedAll,
-            append = FALSE
-        ))
     }
         
     if (!is(regimens, "data.frame")) {
