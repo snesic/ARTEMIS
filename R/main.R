@@ -61,83 +61,22 @@ generateRawAlignments <- function(stringDF,
         stop(paste0("Error: ", obj_name, 
                     " is empty. No patient records found."))
     }
-    
-    cli::cat_bullet(
-        paste(
-            "Processing ",
-            nrow(stringDF),
-            " patients and ",
-            nrow(regimens),
-            " regimens...",
-            sep = ""
-        ),
-        bullet_col = "yellow",
-        bullet = "info"
-    )
-    
-    # compare only to regimens that have at least one overlapping drug
-    # remove time and create a vector of drugs per regimen
-    regimens_list = gsub("[0-9.]", "", regimens$shortString)
-    regimens_list = strsplit(x = regimens_list, split = ";")
-    
-    output_all = list()
-    for (j in seq_len(nrow(stringDF))) {
-        drugRecord <- encode(stringDF[j, ]$seq)
-        
-        drugs = unlist(lapply(drugRecord, tail, 1))
-        drugs = tolower(drugs)
-        # patient j muss contain all drugs from the regimens
-        which_regimens = lapply(regimens_list, function(x, y)
-            length(intersect(x, y)) / length(unique(x)) > 0.99, y = drugs)
-        which_regimens = unlist(which_regimens)
-        
-        #print(paste("for patient:", j, "number of reg:", sum(which_regimens))
-        
-        if (sum(which_regimens) == 0) {
-            print(paste("No regimens for", stringDF[j, ]$person_id))
-            next
-        }
-        selected_regimens = regimens[which_regimens, ]
-        
-        output_patient = list()
-        for (i in c(1:nrow(selected_regimens))) {
-            
-            output_patient[[i]] <- align(
-                regimen = selected_regimens[i, ]$shortString,
-                regName = selected_regimens[i, ]$regName,
-                personID = stringDF[j, ]$person_id,
-                personSeq = stringDF[j, ]$seq,
-                g = g,
-                Tfac = Tfac,
-                s = NA,
-                verbose = verbose,
-                mem = mem,
-                removeOverlap = removeOverlap,
-                method = method
-            )
-        }
-        
-        progress(x = j, max = nrow(stringDF))
-
-        output_all <- c(output_all, output_patient)
-        
+    if (!exists("temporal_alignment_all", mode = "function")) {
+        reticulate::source_python(system.file("python/main.py", package = "ARTEMIS"), envir = globalenv())
     }
-    
-    output_all = dplyr::bind_rows(output_all)
 
-    if (writeOut == TRUE) {
-        cli::cat_bullet("Writing output...",
-                        bullet_col = "yellow",
-                        bullet = "info")
-        
-        outputFile <- here::here()
-        write.csv(file = paste(outputFile, "/", outputName, ".csv", sep = ""),
-                  x = output_all)
-    }
+    output_all = temporal_alignment_all(stringDF, regimens)
+
+    output_all <- output_all %>%
+        dplyr::mutate(dplyr::across(c(Score, adjustedS, 
+                                      regimen_Start, regimen_End, 
+                                      drugRec_Start, drugRec_End,
+                                      Aligned_Seq_len, totAlign), 
+                                    as.numeric))
     
-    cli::cat_bullet("Complete!",
-                    bullet_col = "green",
-                    bullet = "tick")
+    output_all <- output_all %>%
+        dplyr::filter(!is.na(adjustedS) & !is.na(totAlign)) %>%
+        dplyr::filter(totAlign > 0 & adjustedS > 0)
     
     return(output_all)
     
