@@ -22,9 +22,30 @@ def find_gaps(pat, seq):
 
 
 def encode_py(str_seq: str):
-    # Split by ';'
-    s_temp = str_seq.rstrip(";")
-    s_temp = s_temp.split(";")
+    """
+    Encode a semicolon-separated string of drug records into structured pairs.
+
+    Each element of the input string has the form "x.y" (e.g., "0.c").
+    The function splits on ';' and then splits each element on '.'.
+
+    Parameters
+    ----------
+    str_seq : str
+        Input string of drug records, e.g. "0.c;0.c;1.a;1.b;1.c".
+        A trailing semicolon is allowed and will be ignored.
+
+    Returns
+    -------
+    list of list of str
+        Encoded records, where each record is represented as [x, y].
+
+    Examples
+    --------
+    >>> encode_py("0.c;0.c;1.a;1.b;1.c;")
+    [['0', 'c'], ['0', 'c'], ['1', 'a'], ['1', 'b'], ['1', 'c']]
+    """
+    # Remove trailing ';' if present and split by ';'
+    s_temp = str_seq.rstrip(";").split(";")
 
     s_encoded = []
 
@@ -37,7 +58,22 @@ def encode_py(str_seq: str):
 
 
 def make_matrix(val1, val2):
-    # Extract unique second elements from val2
+    """
+    Generate similarity matrix for a given set of drug records.
+    Same drugs will have similarity of 1, all others -1.
+
+    Parameters
+    ----------
+    val1 : list
+        Encoded drug records (output of encode_py).
+    val2 : list
+        Encoded drug records (output of encode_py).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Similarity matrix.
+    """
     all_second = [item[1] for item in val1] + [item[1] for item in val2]
 
     # Keep unique elements
@@ -144,21 +180,21 @@ def temporal_alignment_all(
             s2 = encode_py(row2[col_name_regimens])
             s2_drugs = set(item[1] for item in s2)
 
-            # Condition: all elements of s2_drugs in s1_drugs
+            # Condition: all drugs from regimen in patient record
             if s2_drugs.issubset(s1_drugs):
+                # Avoid modifying original s1 within temporal_alignment
                 s1_copy = [x[:] for x in s1]
-                # to avoid modifying original s1 within temporal_alignment
 
                 df = temporal_alignment(
                     s2,
                     s1_copy,
-                    g=0.4,
-                    T=0.5,
-                    s=None,
-                    verbose=0,
-                    mem=-1,
-                    removeOverlap=1,
-                    method="PropDiff",
+                    g=g,
+                    T=T,
+                    s=s,
+                    verbose=verbose,
+                    mem=mem,
+                    removeOverlap=removeOverlap,
+                    method=method,
                 )
 
                 df["regName"] = row2[col_name_regName]
