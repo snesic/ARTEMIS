@@ -3,10 +3,10 @@ import pandas as pd
 import math as math
 from re import search as search_python
 from re import findall
-from numpy import append
 from init import init_Hmat, init_TRmat, init_TCmat, init_traceMat
 from score import TSW_scoreMat, find_best_score
 from align import align_TSW
+from tqdm import tqdm
 
 pd.options.display.max_columns = None
 
@@ -21,9 +21,41 @@ def find_gaps(pat, seq):
     return gaps
 
 
+def encode_py(str_seq: str):
+    # Split by ';'
+    s_temp = str_seq.rstrip(";")
+    s_temp = s_temp.split(";")
+
+    s_encoded = []
+
+    for item in s_temp:
+        # Split each "x.y" into [x, y]
+        t_vec = item.split(".")
+        s_encoded.append(t_vec)
+
+    return s_encoded
+
+
+def make_matrix(val1, val2):
+    # Extract unique second elements from val2
+    all_second = [item[1] for item in val1] + [item[1] for item in val2]
+
+    # Keep unique elements
+    unique_vals = list(dict.fromkeys(all_second))
+    n = len(unique_vals)
+    mat = np.identity(n, dtype=np.float64)
+    mat[mat == 0] = -1.1
+
+    # Build DataFrame with row/col labels
+    df = pd.DataFrame(mat, index=unique_vals, columns=unique_vals)
+    return df
+
+
 def temporal_alignment(
-    s1, s2, g, T, s, verbose, mem=-1, removeOverlap=0, method="PropDiff"
+    s1, s2, g=0.4, T=0.5, s=None, verbose=0, mem=-1, removeOverlap=1, method="PropDiff"
 ):
+    s = make_matrix(s1, s2)
+
     s1_len = len(s1)
     s2_len = len(s2)
 
@@ -34,12 +66,12 @@ def temporal_alignment(
     traceMat = init_traceMat(s1_len, s2_len)
 
     # Setup pattern for detecting sequence lengths, by number of "."s (Aligned drugs)
-    pat = "\."
+    pat = r"\."
     # Setup pattern for detecting sequence gaps, by number of "__"s (Aligned gaps)
-    pat_end_gap = "(__;)+__$|__$"
+    pat_end_gap = r"(__;)+__$|__$"
 
     # Init return Dat
-    returnDat = np.empty(10)
+    returnDat = []
 
     # Impute score matrix, retrieve relevant vars
     TSW_scoreMat(s1, s1_len, s2, s2_len, g, T, H, TR, TC, traceMat, s, method)
@@ -67,25 +99,73 @@ def temporal_alignment(
 
         adjustedS = mem_score[i] / totAligned_t
 
-        returnDat = append(
-            returnDat,
-            [
-                s1_aligned_t,
-                s2_aligned_t,
-                mem_score[i],
-                adjustedS,
-                s1_start + 1,
-                s1_end,
-                s2_start + 1,
-                s2_end,
-                s_f_len,
-                totAligned_t,
-            ],
-            axis=0,
-        )
-
-    # Reshape return array to account for secondary alignments
-    returnDat = returnDat.reshape(len(mem_index) + 1, 10)
+        row = {
+            "Regimen": s1_aligned_t,
+            "DrugRecord": s2_aligned_t,
+            "Score": mem_score[i],
+            "adjustedS": adjustedS,
+            "regimen_Start": s1_start + 1,
+            "regimen_End": s1_end,
+            "drugRec_Start": s2_start + 1,
+            "drugRec_End": s2_end,
+            "Aligned_Seq_len": s_f_len,
+            "totAlign": totAligned_t,
+        }
+        returnDat.append(row)
     returnDat = pd.DataFrame(returnDat)
 
     return returnDat
+
+
+def temporal_alignment_all(
+    patients,
+    regimens,
+    col_name_patient_id="person_id",
+    col_name_patient_record="seq",
+    col_name_regimens="shortString",
+    col_name_regName="regName",
+    g=0.4,
+    T=0.5,
+    s=None,
+    verbose=0,
+    mem=-1,
+    removeOverlap=1,
+    method="PropDiff",
+):
+    dfs = []
+
+    for i, row1 in tqdm(
+        patients.iterrows(), desc="Processing patients", total=patients.shape[0]
+    ):
+        s1 = encode_py(row1[col_name_patient_record])
+        s1_drugs = set(item[1] for item in s1)
+
+        for j, row2 in regimens.iterrows():
+            s2 = encode_py(row2[col_name_regimens])
+            s2_drugs = set(item[1] for item in s2)
+
+            # Condition: all elements of s2_drugs in s1_drugs
+            if s2_drugs.issubset(s1_drugs):
+                s1_copy = [x[:] for x in s1]
+                # to avoid modifying original s1 within temporal_alignment
+
+                df = temporal_alignment(
+                    s2,
+                    s1_copy,
+                    g=0.4,
+                    T=0.5,
+                    s=None,
+                    verbose=0,
+                    mem=-1,
+                    removeOverlap=1,
+                    method="PropDiff",
+                )
+
+                df["regName"] = row2[col_name_regName]
+                df["Regimen_full"] = row2[col_name_regimens]
+                df["personID"] = row1[col_name_patient_id]
+                df["DrugRecord_full"] = row1[col_name_patient_record]
+                dfs.append(df)
+
+    result = pd.concat(dfs, ignore_index=True)
+    return result

@@ -62,16 +62,13 @@ align <- function(regimen,
             )
     
     
-    if (is.na(s)) {
-        s <- defaultSmatrix(regimen, drugRec)
-    }
         
     temp_dat <- temporal_alignment(
         regimen_list,
         drugRec,
         g,
         Tfac,
-        as.data.frame(s),
+        s,
         verbose,
         mem,
         removeOverlap,
