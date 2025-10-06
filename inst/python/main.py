@@ -90,7 +90,38 @@ def make_matrix(val1, val2):
 def temporal_alignment(
     s1, s2, g=0.4, T=0.5, s=None, verbose=0, mem=-1, removeOverlap=1, method="PropDiff"
 ):
-    s = make_matrix(s1, s2)
+    """
+    Align s1 to s2.
+
+    Parameters
+    ----------
+    s1 : list
+        Encoded drug records (output of encode_py).
+    s2 : list
+        Encoded drug records (output of encode_py).
+    g : float, optional
+        Gap penalty, by default 0.4.
+    T : float, optional
+        Time penalty, by default 0.5.
+    s : pandas.DataFrame, optional
+        Similarity matrix, by default None.
+    verbose : int, optional
+        Verbosity level, by default 0.
+    mem : int, optional
+        Number of top alignments to return, by default -1 (all).
+    removeOverlap : int, optional
+        Whether to remove overlapping drugs in s1 after each alignment, by default 1 (True
+        in R).
+    method : str, optional
+        Method for time penalty calculation, by default "PropDiff".
+
+    Returns
+    -------
+    pandas.DataFrame
+        Aligned sequences.
+    """
+    if s is None:
+        s = make_matrix(s1, s2)
 
     s1_len = len(s1)
     s2_len = len(s2)
@@ -153,7 +184,7 @@ def temporal_alignment(
     return returnDat
 
 
-def temporal_alignment_all(
+def align_patients_regimens(
     patients,
     regimens,
     col_name_patient_id="person_id",
@@ -205,3 +236,18 @@ def temporal_alignment_all(
 
     result = pd.concat(dfs, ignore_index=True)
     return result
+
+
+def main():
+    # Example input for testing
+    # patients = pd.read_csv("example_patients.csv")
+    # regimens = pd.read_csv("example_regimens.csv")
+
+    # df = align_patients_regimens(patients, regimens)
+    # print(df)
+    print("Python module loaded successfully.")
+
+
+# This ensures the main function runs only when the script is executed directly
+if __name__ == "__main__":
+    main()
