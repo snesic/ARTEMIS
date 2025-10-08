@@ -43,7 +43,7 @@ generateRawAlignments <- function(stringDF,
                                   regimens,
                                   g,
                                   Tfac,
-                                  s = NA,
+                                  s = NULL,
                                   verbose = 0,
                                   mem = -1,
                                   removeOverlap = -1,
@@ -63,7 +63,7 @@ generateRawAlignments <- function(stringDF,
         reticulate::source_python(system.file("python/main.py", package = "ARTEMIS"), envir = globalenv())
     }
 
-    output = align_patients_regimens(stringDF, regimens)
+    output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, removeOverlap=1, method="PropDiff")
 
     output <- output %>%
         dplyr::mutate(dplyr::across(c(Score, adjustedS, 
