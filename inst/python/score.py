@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import math as math
-import re
 
 
 def lossFunction(T, t1, t2, method, i, j):
