@@ -29,6 +29,12 @@ extensions = [
         include_dirs=[numpy.get_include()],
         extra_compile_args=["-O3"],
     ),
+    Extension(
+        name="run_TSW",
+        sources=["run_TSW.pyx"],
+        include_dirs=[numpy.get_include()],
+        extra_compile_args=["-O3"],
+    ),
 ]
 
 setup(

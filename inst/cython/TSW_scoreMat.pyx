@@ -36,8 +36,8 @@ cdef inline double lossFunction(double T, double t1, double t2, str method, int 
     return tp
 
 
-cpdef double score(
-    np.ndarray[np.float64_t, ndim=2] s,
+cdef double score(
+    double[:, :] s,
     int x, 
     int y
 ):
@@ -54,20 +54,20 @@ cpdef double score(
 # python callable
 # (entrypoint in main)
 # ----------------------------
-cpdef TSW_scoreMat(
-    np.ndarray[np.float64_t, ndim=1] s1_time,
-    np.ndarray[np.int32_t,  ndim=1] s1_drugs,
+cdef TSW_scoreMat(
+    double[:] s1_time,
+    int[:] s1_drugs,
     int s1_len,
-    np.ndarray[np.float64_t, ndim=1] s2_time,
-    np.ndarray[np.int32_t,  ndim=1] s2_drugs,
+    double[:] s2_time,
+    int[:] s2_drugs,
     int s2_len,
     double g,
     double T,
-    np.ndarray[np.float64_t, ndim=2] H,
-    np.ndarray[np.float64_t, ndim=2] TR,
-    np.ndarray[np.float64_t, ndim=2] TC,
-    np.ndarray[np.int32_t,  ndim=2] traceMat,
-    np.ndarray[np.float64_t, ndim=2] s,
+    double[:, :] H,
+    double[:, :] TR,
+    double[:, :] TC,
+    int[:, :] traceMat,
+    double[:, :] s,
     str method
 ):
     """
@@ -163,4 +163,3 @@ cpdef TSW_scoreMat(
             j += 1
         i += 1
 
-    return None
