@@ -125,8 +125,8 @@ cpdef object temporal_alignment(
         method,
     )
 
-    # Find best scoring cell
-    finalScore, finalIndex, mem_index, mem_score = fbs(H, s1_len, s2_len, mem, verbose)
+    # Find best scoring cells (within 10% of max)
+    mem_index, mem_score = fbs(H, s1_len, s2_len, mem, verbose)
 
     # Perform alignment reconstruction
     drug_names = np.array(list(drug2idx.keys()), dtype=object)

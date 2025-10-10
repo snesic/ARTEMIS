@@ -29,7 +29,6 @@ cdef find_best_score(
     cdef int max_idx, i
     cdef tuple max_index
     cdef double mem_min
-    cdef double finalScore
 
     # 1. Get score and index arrays
     mem_score = np.asarray(H[:, s1_len].copy())
@@ -44,9 +43,7 @@ cdef find_best_score(
     # 2. Find max score
     max_idx = np.argmax(mem_score)
     max_score = mem_score[max_idx]
-    finalScore = max_score
     max_index = (max_idx, s1_len)
-    finalIndex = max_index
 
 
     # 3. Sort arrays based on score
@@ -91,4 +88,4 @@ cdef find_best_score(
     mem_score_final = mem_score_final[::-1]
     mem_index_final = mem_index_final[::-1]
 
-    return finalScore, finalIndex, mem_index_final, mem_score_final
+    return mem_index_final, mem_score_final
