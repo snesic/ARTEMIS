@@ -24,8 +24,8 @@ extensions = [
         extra_compile_args=["-O3"],
     ),
     Extension(
-        name="init",
-        sources=["init.pyx"],
+        name="init_TSW",
+        sources=["init_TSW.pyx"],
         include_dirs=[numpy.get_include()],
         extra_compile_args=["-O3"],
     ),

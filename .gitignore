@@ -25,3 +25,7 @@ main_test.py
 __pycache__
 /inst/cython/TSW_Package
 /inst/cython/build
+
+*.so
+*.o
+*.c
