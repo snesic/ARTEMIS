@@ -60,7 +60,8 @@ generateRawAlignments <- function(stringDF,
                     " is empty. No patient records found."))
     }
     if (!exists("align_patients_regimens", mode = "function")) {
-        reticulate::source_python(system.file("python/main.py", package = "ARTEMIS"), envir = globalenv())
+        py_functions = reticulate::import_from_path("main", path = system.file("python", package = "ARTEMIS"))
+        align_patients_regimens = py_functions$align_patients_regimens
     }
 
     output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, removeOverlap=1, method="PropDiff")
