@@ -145,8 +145,8 @@ cpdef object temporal_alignment(
     )
 
     # Return as DataFrame
-    returnDat_fin = pd.DataFrame(returnDat)
-    returnDat_fin.columns = [
+    returnDat = pd.DataFrame(returnDat)
+    returnDat.columns = [
         "Regimen",
         "DrugRecord",
         "Score",
@@ -159,7 +159,7 @@ cpdef object temporal_alignment(
         "totAlign",
     ]
 
-    return returnDat_fin
+    return returnDat
 
 
 cdef list encode_c(str str_seq):
