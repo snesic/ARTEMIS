@@ -2,6 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.DS_Store
 errorReportSql.txt
 CDM_test_long.R
 TestTest.R
