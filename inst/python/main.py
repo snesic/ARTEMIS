@@ -144,9 +144,7 @@ def temporal_alignment(
     TSW_scoreMat(s1, s1_len, s2, s2_len, g, T, H, TR, TC, traceMat, s, method)
 
     # Find best scoring cell
-    finalScore, finalIndex, mem_index, mem_score = find_best_score(
-        H, s1_len, s2_len, mem, verbose
-    )
+    mem_index, mem_score = find_best_score(H, s1_len, s2_len, mem, verbose)
 
     for i in range(0, len(mem_index)):
         s1_aligned_t, s2_aligned_t, totAligned_t, s1_start, s2_start = align_TSW(
@@ -242,9 +240,24 @@ def main():
     # Example input for testing
     # patients = pd.read_csv("example_patients.csv")
     # regimens = pd.read_csv("example_regimens.csv")
+    patients = pd.DataFrame(
+        {
+            "person_id": ["test1"],
+            "seq": [
+                "0.cisplatin;0.pemetrexed;21.cisplatin;0.pemetrexed;42.cisplatin;0.pemetrexed;"
+            ],
+        }
+    )
 
-    # df = align_patients_regimens(patients, regimens)
-    # print(df)
+    regimens = pd.DataFrame(
+        {
+            "regName": ["Regimen1"],
+            "shortString": ["14.pemetrexed;14.pemetrexed;"],
+        }
+    )
+
+    df = align_patients_regimens(patients, regimens)
+    print(df)
     print("Python module loaded successfully.")
 
 
