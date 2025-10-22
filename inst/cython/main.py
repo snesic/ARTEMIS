@@ -71,8 +71,8 @@ def main():
     )
 
     df = align_patients_regimens(patients, regimens)
-    print(df)
-    print("Python module loaded successfully.")
+    # print(df)
+    print("Cython module loaded successfully.")
 
 
 # This ensures the main function runs only when the script is executed directly
