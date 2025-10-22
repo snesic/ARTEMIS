@@ -66,6 +66,15 @@ generateRawAlignments <- function(stringDF,
 
     output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, removeOverlap=1, method="PropDiff")
 
+    if (nrow(output) == 0) {
+        cli::cat_bullet(
+            paste("No alignments", sep = ""),
+            bullet_col = "yellow",
+            bullet = "info"
+        )
+        return(data.frame())
+    }   
+
     output <- output %>%
         dplyr::mutate(dplyr::across(c(Score, adjustedS, 
                                       regimen_Start, regimen_End, 
@@ -95,6 +104,16 @@ generateRawAlignments <- function(stringDF,
 processAlignments <- function(rawOutput,
                               regimenCombine,
                               regimens = "none") {
+
+    if (nrow(rawOutput) == 0) {
+        cli::cat_bullet(
+            paste("No alignments detected", sep = ""),
+            bullet_col = "yellow",
+            bullet = "info"
+        )
+        return(data.frame()) 
+    }
+
     IDs_All <- unique(rawOutput$personID)    
     cli::cat_bullet(
         paste(
