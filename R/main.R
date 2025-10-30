@@ -64,7 +64,7 @@ generateRawAlignments <- function(stringDF,
         align_patients_regimens = py_functions$align_patients_regimens
     }
 
-    output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, removeOverlap=1, method="PropDiff")
+    output = align_patients_regimens(stringDF, regimens, g=g, T=Tfac, s=s, mem=-1, removeOverlap=1, method=method)
 
     if (nrow(output) == 0) {
         cli::cat_bullet(
