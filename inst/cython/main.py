@@ -36,17 +36,17 @@ def align_patients_regimens(
     return align_patients_regimens_fast(
         patients,
         regimens,
-        col_name_patient_id="person_id",
-        col_name_patient_record="seq",
-        col_name_regimens="shortString",
-        col_name_regName="regName",
+        col_name_patient_id=col_name_patient_id,
+        col_name_patient_record=col_name_patient_record,
+        col_name_regimens=col_name_regimens,
+        col_name_regName=col_name_regName,
         g=g,
         T=T,
-        s=None,
-        verbose=0,
-        mem=-1,
-        removeOverlap=1,
-        method="PropDiff",
+        s=s,
+        verbose=verbose,
+        mem=mem,
+        removeOverlap=removeOverlap,
+        method=method,
     )
 
 
