@@ -214,15 +214,15 @@ calculateEras <- function(processedAll, discontinuationTime = 120) {
         
         tempDF[1, ]$delete <- "N"
         tempDF1 <- tempDF %>%
-            mutate(newLine = cumsum(delete == "N")) %>%
-            summarise(
+            dplyr::mutate(newLine = cumsum(delete == "N")) %>%
+            dplyr::summarise(
                 adjustedS = sum(adjustedS * (t_end - t_start) / sum(t_end - t_start)),
                 t_start = min(t_start),
                 t_end = max(t_end),
                 timToEod = min(timeToEOD),
                 .by = c(component, newLine, personID)
             ) %>%
-            mutate(
+            dplyr::mutate(
                 regLength = t_end - t_start,
                 timeToNextRegimen = lag(t_start, 1) - t_end,
                 First_Line = 1 * (row_number() == 1),
