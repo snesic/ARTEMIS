@@ -4,6 +4,7 @@ Sys.setenv(RETICULATE_PYTHON = "/Users/snesic/miniconda3/envs/tsw-env/bin/python
 devtools::load_all("../ARTEMIS/")
 
 ##### INPUT #####
+# TODO: check if we want to keep this as an example:
 connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "redshift",
                                                                 server="server/database",
                                                                 user="username",
@@ -11,12 +12,12 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "redshift
                                                                 password="password",
                                                                 pathToDriver = "./JBDC")
 
-
+# Load SQLite test database within the package
 db_path <- system.file("extdata", "testing_db.sqlite", package = "ARTEMIS")
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
     dbms = "sqlite",
-    server = "./data/testing_db.sqlite"
+    server = db_path
 )
 
 # In case we need to change json
