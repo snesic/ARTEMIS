@@ -1,5 +1,7 @@
 #
-library(ARTEMIS)
+Sys.setenv(RETICULATE_PYTHON = "/Users/snesic/miniconda3/envs/tsw-env/bin/python3")
+
+devtools::load_all("../ARTEMIS/")
 
 ##### INPUT #####
 connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "redshift",
@@ -9,20 +11,51 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "redshift
                                                                 password="password",
                                                                 pathToDriver = "./JBDC")
 
-json <- loadCohort()
+
+db_path <- system.file("extdata", "testing_db.sqlite", package = "ARTEMIS")
+
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+    dbms = "sqlite",
+    server = "./data/testing_db.sqlite"
+)
+
+# In case we need to change json
+if (FALSE) {
+    df_json = ARTEMIS::df_json
+
+    df_json$json <- readChar("../ARTEMIS/data/json.json", 
+                               nchars = file.info("../ARTEMIS/data/json.json")$size)
+
+
+    save(df_json, file = "./data/df_json.rda")
+}
+
+df_json <- loadCohort()
 name <- "lungcancer"
 
 validdrugs <- loadDrugs()
-regimens <- loadRegimens(condition = "lungCancer")
+regimens <- loadRegimens(condition = "all")
 regGroups <- loadGroups()
 
-cdmSchema      <- "schema_containing_data"
-writeSchema    <- "schmea_with_write_access"
+cdmSchema      <- "main"
+writeSchema    <- "main"
 
 ##### MAIN #####
-con_df <- getConDF(connectionDetails = connectionDetails, json = json, name = name, cdmSchema = cdmSchema, writeSchema = writeSchema)
+con_df <- getConDF(connectionDetails = connectionDetails, 
+                   json = df_json$json, 
+                   name = name, 
+                   cdmSchema = cdmSchema, 
+                   writeSchema = writeSchema)
+
+
+# Check if the dates are correctly written, and if not: 
+con_df$drug_exposure_start_date
+con_df$drug_exposure_start_date <- as.POSIXct(con_df$drug_exposure_start_date, 
+                                              origin = "1970-01-01", tz = "UTC")
 
 stringDF <- stringDF_from_cdm(con_df = con_df, writeOut = F, validDrugs = validdrugs)
+
+## Alignment
 
 output_all <- stringDF %>% generateRawAlignments(regimens = regimens,
                                                  g = 0.4,
@@ -30,7 +63,10 @@ output_all <- stringDF %>% generateRawAlignments(regimens = regimens,
                                                  method = "PropDiff",
                                                  verbose = 0)
 
-processedAll <- output_all %>% processAlignments(regimenCombine = 28, regimens = regimens)
+## Post-process Alignment
+
+processedAll <- output_all %>% 
+    processAlignments(regimenCombine = 28, regimens = regimens)
 
 processedEras <- processedAll %>% calculateEras()
 
