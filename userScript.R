@@ -20,22 +20,12 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
     server = db_path
 )
 
-# In case we need to change json
-if (FALSE) {
-    df_json = ARTEMIS::df_json
-
-    df_json$json <- readChar("../ARTEMIS/data/json.json", 
-                               nchars = file.info("../ARTEMIS/data/json.json")$size)
-
-
-    save(df_json, file = "./data/df_json.rda")
-}
 
 df_json <- loadCohort()
 name <- "lungcancer"
 
 validdrugs <- loadDrugs()
-regimens <- loadRegimens(condition = "all")
+regimens <- loadRegimens()
 regGroups <- loadGroups()
 
 cdmSchema      <- "main"
@@ -71,7 +61,8 @@ processedAll <- output_all %>%
 
 processedEras <- processedAll %>% calculateEras()
 
-regStats <- processedEras %>% generateRegimenStats()
+# Regimen stats does not work 
+# regStats <- processedEras %>% generateRegimenStats()
 
 ##### OUTPUT #####
 

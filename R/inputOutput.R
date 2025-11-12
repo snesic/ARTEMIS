@@ -167,7 +167,7 @@ loadDrugs <- function(absolute=NULL) {
 #' Edit: all conditions supported matching a name OR providing a mapping, see example
 #' @param mapping A named list of user provids condition to maping
 #' @export
-loadRegimens <- function(condition, absolute = NULL, 
+loadRegimens <- function(condition = "all", absolute = NULL, 
                          mapping = list("lungCancer" = c("Thoraic Oncology", "Thoraic Oncology"),
                                         "multipleMyeloma" = c("Multiple Myeloma"))) {
   
